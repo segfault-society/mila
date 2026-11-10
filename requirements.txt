@@ -12,10 +12,13 @@ certifi==2026.10.23
     # via
     #   httpcore
     #   httpx
+    #   requests
 cffi==2.1.1 ; platform_python_implementation != 'PyPy'
     # via cryptography
 charset-normalizer==3.5.2
-    # via pdfminer-six
+    # via
+    #   pdfminer-six
+    #   requests
 cloudpickle==3.1.2
     # via joblib
 colorama==0.4.6 ; sys_platform == 'win32'
@@ -34,6 +37,7 @@ idna==3.20
     # via
     #   anyio
     #   httpx
+    #   requests
 joblib==1.6.0
     # via scikit-learn
 lightgbm==4.7.0
@@ -86,6 +90,10 @@ python-dateutil==2.9.0.post0
     # via
     #   holidays
     #   pandas
+requests==2.34.2
+    # via resend
+resend==2.53.1
+    # via mila
 rich==15.0.0
     # via typer
 scikit-learn==1.9.1
@@ -117,6 +125,7 @@ typing-extensions==4.16.0
     #   psycopg
     #   pydantic
     #   pydantic-core
+    #   resend
     #   typing-inspection
 typing-inspection==0.4.5
     # via pydantic
@@ -124,3 +133,5 @@ tzdata==2026.6 ; sys_platform == 'emscripten' or sys_platform == 'win32'
     # via
     #   pandas
     #   psycopg
+urllib3==2.8.0
+    # via requests

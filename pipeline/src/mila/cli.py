@@ -122,16 +122,43 @@ def digest(send_now: bool = typer.Option(False, "--send", help="record/send inst
     from datetime import date
 
     from mila.db import connect
-    from mila.digest import build_digest
+    from mila.digest import build_digest, build_digest_email
+    from mila.emailer import email_enabled, send_email
     from mila.sms import send
 
     with connect() as conn:
-        subs = conn.execute("select id, phone_e164 from subscribers where active order by id").fetchall()
-        for sid, phone in subs:
+        subs = conn.execute("select id, phone_e164, email from subscribers where active order by id").fetchall()
+        for sid, phone, email in subs:
             run_id, body = build_digest(conn, sid, date.today())
             typer.echo(f"--- subscriber {sid} ({len(body)} chars)\n{body}")
-            if send_now:
-                typer.echo(f"status: {send(conn, sid, run_id, phone, body)}")
+            if not send_now:
+                continue
+            typer.echo(f"sms: {send(conn, sid, run_id, phone, body)}")
+            if email and email_enabled():
+                _, subject, text, html = build_digest_email(conn, sid, date.today())
+                try:
+                    pid, status = send_email(email, subject, text, html), "sent"
+                except Exception as exc:  # record the failure, keep going with the next owner
+                    pid, status = None, f"failed: {str(exc)[:200]}"
+                conn.execute("""insert into messages (subscriber_id, run_id, channel, body, status, provider_id)
+                                values (%s, %s, 'email', %s, %s, %s)""", (sid, run_id, subject, status, pid))
+                conn.commit()
+                typer.echo(f"email: {status}")
+
+
+@app.command("email-test")
+def email_test(to: str = typer.Option(..., help="address to send the demo kitchen's digest to")) -> None:
+    """Send the first subscriber's digest to one address, to check email delivery end to end."""
+    from datetime import date
+
+    from mila.db import connect
+    from mila.digest import build_digest_email
+    from mila.emailer import send_email
+
+    with connect() as conn:
+        sid = conn.execute("select id from subscribers where active order by id limit 1").fetchone()[0]
+        _, subject, text, html = build_digest_email(conn, sid, date.today())
+    typer.echo(f"sent: {send_email(to, subject, text, html)}")
 
 
 @app.command()
