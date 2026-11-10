@@ -94,6 +94,16 @@ def spike_score(pred: pd.Series, truth: pd.Series) -> SpikeScore:
     return SpikeScore(precision, recall, f1, n_pred, n_true)
 
 
+def best_f1_threshold(val: pd.DataFrame, col: str) -> tuple[float, float]:
+    """(threshold, validation F1) maximising F1 on the validation period."""
+    best = (0.5, -1.0)
+    for t in np.arange(0.05, 0.91, 0.025):
+        f1 = spike_score((val[col] >= t) & val["spikes_known"], val["spike"] == 1).f1
+        if f1 > best[1]:
+            best = (float(t), f1)
+    return best
+
+
 def choose_threshold(val: pd.DataFrame, col: str) -> float:
     """Best F1 among thresholds reaching the target precision on the validation period (else best F1)."""
     best, best_any = (None, -1.0), (0.5, -1.0)
@@ -139,9 +149,16 @@ def summarise(res: pd.DataFrame, holdout_start: str) -> dict:
     truth = hold["spike"] == 1
     out["spike_rate"] = float(truth.mean())
     for col in ("p_spike_clf", "p_spike_dist"):
+        # two operating points, both chosen on the validation period only
         t = choose_threshold(val, col) if len(val) else 0.5
         s = spike_score((hold[col] >= t) & hold["spikes_known"], truth)
         out[f"spike_{col}"] = {"threshold": t, **s.__dict__}
+        t_f1, val_f1 = best_f1_threshold(val, col) if len(val) else (0.5, float("nan"))
+        s = spike_score((hold[col] >= t_f1) & hold["spikes_known"], truth)
+        out[f"spike_{col}_f1"] = {"threshold": t_f1, "val_f1": val_f1, **s.__dict__}
+    out["spike_pr_curve"] = [
+        {"threshold": float(t), **spike_score((hold["p_spike_clf"] >= t) & hold["spikes_known"], truth).__dict__}
+        for t in (0.1, 0.15, 0.2, 0.25, 0.3, 0.4, 0.5, 0.6)]
     out["spike_trend_rule"] = spike_score(hold["ret_5"] >= TREND_RULE, truth).__dict__
     rain_ok = hold["region"].isin(["upcountry", "dryzone"])
     out["spike_rain_rule"] = spike_score(rain_ok & (hold["rain_anom_7"] >= RAIN_RULE), truth).__dict__

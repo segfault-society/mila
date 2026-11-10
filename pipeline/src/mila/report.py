@@ -52,11 +52,15 @@ def write_backtest_report(conn: psycopg.Connection, start: str, holdout: str, st
                           ablation: bool, out_dir: str) -> Path:
     prices = load_prices(conn)
     df = build_features(prices, weather_inputs(conn))
+    conn.rollback()  # end the read transaction: Neon drops connections left idle in a transaction
     res = run_backtest(df, start=start, step_months=step_months)
+    res.to_pickle(Path(out_dir).parent / "data" / "backtest_res.pkl")
     s = summarise(res, holdout)
     clf, dist = s["spike_p_spike_clf"], s["spike_p_spike_dist"]
-    use_clf = clf["f1"] >= dist["f1"]
-    best = clf if use_clf else dist
+    clf_f1, dist_f1 = s["spike_p_spike_clf_f1"], s["spike_p_spike_dist_f1"]
+    # live operating point: the method and threshold with the best F1 on the VALIDATION period
+    use_clf = clf_f1["val_f1"] >= dist_f1["val_f1"]
+    best = clf_f1 if use_clf else dist_f1
     col = "p_spike_clf" if use_clf else "p_spike_dist"
 
     abl_txt = "_Ablation skipped._"
@@ -112,13 +116,22 @@ Mean pinball loss: Mila {_f(s['pinball_model'])} vs baseline {_f(s['pinball_base
 
 | Method | Precision | Recall | F1 | Warnings | Actual spikes |
 |---|---|---|---|---|---|
-{_spike_row(f"Mila, direct classifier (threshold {clf['threshold']:.2f})", clf)}
-{_spike_row(f"Mila, from calibrated distribution (threshold {dist['threshold']:.2f})", dist)}
+{_spike_row(f"Mila, direct classifier, best validation F1 (threshold {clf_f1['threshold']:.2f})", clf_f1)}
+{_spike_row(f"Mila, from calibrated distribution, best validation F1 (threshold {dist_f1['threshold']:.2f})", dist_f1)}
+{_spike_row(f"Mila, direct classifier, precision >= 60% on validation (threshold {clf['threshold']:.2f})", clf)}
+{_spike_row(f"Mila, from distribution, precision >= 60% on validation (threshold {dist['threshold']:.2f})", dist)}
 {_spike_row("Last week's trend rule (rose 10%+ last week)", s['spike_trend_rule'])}
 {_spike_row("Rainfall rule (7-day rain 2x normal in growing area)", s['spike_rain_rule'])}
 
 Live system uses: **{'direct classifier' if use_clf else 'calibrated distribution'}** at threshold
-{best['threshold']:.2f} (chosen on the validation period, never on the hold-out).
+{best['threshold']:.2f}: the method and threshold with the best F1 on the 2019-2023 validation period (never chosen
+on the hold-out).
+
+Precision/recall trade-off of the direct classifier on the hold-out (for owners who prefer fewer, surer warnings):
+
+| Threshold | Precision | Recall | F1 | Warnings |
+|---|---|---|---|---|
+{chr(10).join(f"| {r['threshold']:.2f} | {_pct(r['precision'])} | {_pct(r['recall'])} | {_f(r['f1'], 3)} | {r['n_pred']} |" for r in s['spike_pr_curve'])}
 
 ## Does abstaining help?
 
@@ -151,10 +164,12 @@ Mila abstained on {_pct(s['abstain_rate'])} of hold-out forecasts. Median-foreca
                   ("_model", "spike_source_is_classifier", 1.0 if use_clf else 0.0),
                   ("_all", "coverage80", s["coverage_calibrated"]), ("_all", "mase", s["mase"]),
                   ("_all", "spike_precision", best["precision"]), ("_all", "spike_recall", best["recall"])]
-    with conn.cursor() as cur:
+    from mila.db import connect
+
+    with connect() as w, w.cursor() as cur:  # fresh connection: the read one may have been closed while fitting
         cur.execute("delete from backtest_scores where run_label = 'latest'")
         cur.executemany("insert into backtest_scores (run_label, item_key, metric, value) values ('latest', %s, %s, %s)",
                         [(a, b, None if c is None or (isinstance(c, float) and math.isnan(c)) else float(c))
                          for a, b, c in list(scores.itertuples(index=False)) + model_rows])
-    conn.commit()
+        w.commit()
     return path

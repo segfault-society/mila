@@ -21,6 +21,7 @@ ALPHA = 0.2  # 80% interval
 MIN_CAL_PER_ITEM = 80
 WIDTH_RELATIVE = 1.6  # a range 1.6x wider than usual for the item is too wide to act on
 WIDTH_ABSOLUTE = math.log(3.0)  # ... and any 80% range spanning more than x3 always is
+WIDTH_MATTERS = math.log(1.5)  # ranges narrower than x1.5 (about +/-20%) are never "too wide"
 MIN_SPIKES_FOR_WARNINGS = 12
 PARAMS = dict(n_estimators=300, learning_rate=0.05, num_leaves=31, min_child_samples=40, subsample=0.8,
               subsample_freq=1, colsample_bytree=0.8, verbose=-1, n_jobs=-1, random_state=7)
@@ -112,7 +113,8 @@ class Model:
         reasons = pd.Series([None] * len(df), index=df.index, dtype=object)
         width = pred["q90"] - pred["q10"]
         usual = df["item_key"].astype(str).map(self.typical_width).astype(float).fillna(width.median())
-        too_wide = (width > WIDTH_RELATIVE * usual) | (width > WIDTH_ABSOLUTE)
+        # unusually wide for this item AND wide enough to matter (a stable item's "wide" range is still narrow)
+        too_wide = ((width > WIDTH_RELATIVE * usual) & (width > WIDTH_MATTERS)) | (width > WIDTH_ABSOLUTE)
         reasons[too_wide] = "range too wide to act on this week"
         for c, (lo, hi) in self.feature_ranges.items():
             out = (df[c] < lo) | (df[c] > hi)

@@ -38,6 +38,18 @@ def _d(d: date) -> str:
     return f"{d.day} {d:%b}"
 
 
+def _why(line: Line) -> str:
+    """The first reason that points the same way as the signal (a rebound after a drop is said as such)."""
+    for d in line.drivers:
+        low = d.lower()
+        if "down" in low and "over the last week" in low:
+            return d.replace("already down", "fell") + ", and prices usually recover after a drop like that"
+        if any(w in low for w in ("below normal", "below its", "pulling the forecast down")):
+            continue
+        return d
+    return ""
+
+
 def _action(line: Line, subs: list[str]) -> str:
     storable = line.item_key in STORABLE
     if line.signal == "spike":
@@ -65,7 +77,8 @@ def render(name: str, market: str, price_type: str, data_date: date, lines: list
             continue
         head = {"spike": "SPIKE LIKELY", "rise": "rise likely", "fall": "falling", "steady": "steady"}[x.signal]
         rng = f"{_rs(x.q10)}-{x.q90:,.0f}" if x.q10 and x.q90 else ""
-        why = f" Why: {x.drivers[0]}." if x.signal in ("spike", "rise") and x.drivers else ""
+        reason = _why(x) if x.signal in ("spike", "rise") else ""
+        why = f" Why: {reason}." if reason else ""
         chance = f" Spike chance {x.spike_prob * 100:.0f}%." if x.signal == "spike" and x.spike_prob else ""
         out.append(f"{'!' if x.signal == 'spike' else '-'} {n} {head}: now {_rs(x.base_price)}, "
                    f"likely {rng} next week.{chance}{why} {_action(x, steady_veg)}")
@@ -94,6 +107,7 @@ def build_digest(conn: psycopg.Connection, subscriber_id: int, today: date) -> t
     packet_today = sum(basket[x.item_key] * x.base_price for x in lines) or None
     have = [x for x in lines if x.q50 is not None]
     packet_next = None
-    if have and len(have) == len(lines):
-        packet_next = tuple(sum(basket[x.item_key] * getattr(x, q) for x in have) for q in ("q10", "q50", "q90"))
+    if have:  # items without a forecast are counted at today's price
+        packet_next = tuple(sum(basket[x.item_key] * (getattr(x, q) if x.q50 is not None else x.base_price)
+                                for x in lines) for q in ("q10", "q50", "q90"))
     return run_id, render(name, market, ptype, data_date, lines, packet_today, packet_next, today)
