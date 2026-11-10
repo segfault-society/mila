@@ -19,3 +19,7 @@ node_modules/
 .trigger/
 # os
 .DS_Store
+
+# local agent worktrees and browser tooling
+.claude/
+.playwright-mcp/

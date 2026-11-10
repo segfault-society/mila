@@ -134,12 +134,12 @@ export default async function PlannerPage() {
 }
 
 function Headline({ plan }: { plan: Plan }) {
-  const { swapsPerDay, buyAheadWeek, perDay } = plan.saving;
-  const swapCount = plan.swaps.filter((s) => (s.options[0]?.saving ?? 0) >= 1).length;
+  const { swapsPerDay, buyAheadWeek, perDay, risePerDay } = plan.saving;
+  const swapCount = plan.swaps.filter((s) => (s.options[0]?.riseAvoided ?? 0) >= 1).length;
   const buyCount = plan.buyAhead.filter((b) => b.kind === "buy_now").length;
   const parts: string[] = [];
   if (swapsPerDay >= 1) {
-    parts.push(`Swapping ${swapCount} item${swapCount === 1 ? "" : "s"} about to rise: up to ${rsw(swapsPerDay)} a day`);
+    parts.push(`Swapping ${swapCount} rising item${swapCount === 1 ? "" : "s"} for steadier ones: about ${rsw(swapsPerDay)} a day`);
   }
   if (buyAheadWeek >= 1) {
     parts.push(
@@ -157,8 +157,13 @@ function Headline({ plan }: { plan: Plan }) {
         <div className="min-w-0 flex-1">
           {perDay >= 1 ? (
             <>
-              <p className="text-sm text-muted-foreground">You could save next week</p>
-              <p className="tabular mt-0.5 text-3xl font-semibold tracking-tight">about {rsw(perDay)} a day</p>
+              <p className="text-sm text-muted-foreground">Next week you could avoid</p>
+              <p className="tabular mt-0.5 text-3xl font-semibold tracking-tight">about {rsw(perDay)} a day of rises</p>
+              {risePerDay >= 1 && (
+                <p className="tabular mt-1 text-sm text-muted-foreground">
+                  The rises Mila expects would add about {rsw(risePerDay)} a day to your basket.
+                </p>
+              )}
               {parts.length > 0 && (
                 <p className="tabular mt-1 text-sm text-muted-foreground">
                   {parts.join("; ").replace(/^b/, "B")}.
@@ -167,10 +172,10 @@ function Headline({ plan }: { plan: Plan }) {
             </>
           ) : (
             <>
-              <p className="text-lg font-semibold tracking-tight">No savings to act on this week</p>
+              <p className="text-lg font-semibold tracking-tight">No rises worth acting on this week</p>
               <p className="mt-0.5 text-sm text-muted-foreground">
                 {anyRising
-                  ? "Some items are rising, but the steadier options would not cost less a day at your amounts. They are listed below if you still want to switch."
+                  ? "Some items are rising, but no steadier option rises less by enough to matter at your amounts. They are listed below if you still want to switch."
                   : "Nothing in your basket is expected to rise enough to swap or buy ahead. Buy as usual."}
               </p>
             </>
@@ -200,8 +205,8 @@ function SwapsCard({
       <CardHeader>
         <CardTitle className="text-lg">Swaps to consider this week</CardTitle>
         <CardDescription>
-          These are options to consider, not equal swaps: the dish, taste and cooking change. Each compares your daily
-          amount of the item at next week&apos;s middle estimate.
+          These are options to consider, not equal swaps: the dish, taste and cooking change. Each shows how much of
+          next week&apos;s expected rise the swap avoids for your daily amount, and the price gap between the two items.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -244,18 +249,25 @@ function SwapsCard({
                             <SignalBadge signal={o.sub.signal} prob={o.sub.spikeProb} size="sm" />
                             {o.inBasket && <span className="text-xs text-muted-foreground">already in your basket</span>}
                           </p>
-                          <p
-                            className={cn(
-                              "tabular text-sm font-semibold",
-                              o.saving >= 0.5 ? "text-steady" : "text-muted-foreground",
-                            )}
-                          >
-                            {o.saving >= 0.5
-                              ? `${rsw(o.saving)} less a day`
-                              : o.saving <= -0.5
-                                ? `${rsw(-o.saving)} more a day`
-                                : "About the same a day"}
-                          </p>
+                          <div className="text-right">
+                            <p
+                              className={cn(
+                                "tabular text-sm font-semibold",
+                                o.riseAvoided >= 0.5 ? "text-steady" : "text-muted-foreground",
+                              )}
+                            >
+                              {o.riseAvoided >= 0.5
+                                ? `Avoids ${rsw(o.riseAvoided)} of the rise a day`
+                                : "Avoids little of the rise"}
+                            </p>
+                            <p className="tabular text-xs text-muted-foreground">
+                              {o.saving >= 0.5
+                                ? `and costs ${rsw(o.saving)} less a day`
+                                : o.saving <= -0.5
+                                  ? `but costs ${rsw(-o.saving)} more a day`
+                                  : "about the same cost a day"}
+                            </p>
+                          </div>
                         </div>
                         <dl className="tabular grid gap-x-4 gap-y-1 text-xs sm:grid-cols-2">
                           <div>

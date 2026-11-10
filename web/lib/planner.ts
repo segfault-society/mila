@@ -53,8 +53,13 @@ export type SwapOption = {
   /** owner's daily quantity of the original item, priced at each item's middle estimate */
   fromCost: number;
   subCost: number;
-  /** fromCost − subCost: positive means the substitute costs less a day */
+  /** fromCost − subCost: positive means the substitute costs less a day (mostly the price gap between items) */
   saving: number;
+  /**
+   * The part Mila's forecast adds: how much of next week's expected rise the swap avoids, for the owner's quantity
+   * = qty × (rise of the original − rise of the substitute). Price-level differences between items do not count.
+   */
+  riseAvoided: number;
   inBasket: boolean;
 };
 
@@ -73,7 +78,8 @@ export type Plan = {
   storablesChecked: BoardRow[];
   /** storables in the basket without a forecast this week */
   storablesNoForecast: BoardRow[];
-  saving: { swapsPerDay: number; buyAheadWeek: number; perDay: number };
+  /** forecast-driven only: rise avoided by swaps (each substitute used once) + buy-ahead savings */
+  saving: { swapsPerDay: number; buyAheadWeek: number; perDay: number; risePerDay: number };
   targetDate: string | null;
   dataDate: string | null;
 };
@@ -117,13 +123,14 @@ export function buildPlan(board: { rows: BoardRow[]; run: Run | null }, basket: 
       .map((sub) => {
         const fromCost = qty * from.mid;
         const subCost = qty * sub.mid;
-        return { sub, fromCost, subCost, saving: fromCost - subCost, inBasket: sub.row.key in basket };
+        const riseAvoided = qty * (from.mid - from.today) - qty * (sub.mid - sub.today);
+        return { sub, fromCost, subCost, saving: fromCost - subCost, riseAvoided, inBasket: sub.row.key in basket };
       })
-      .sort((a, b) => b.saving - a.saving || a.sub.change - b.sub.change)
+      .sort((a, b) => b.riseAvoided - a.riseAvoided || b.saving - a.saving)
       .slice(0, MAX_OPTIONS);
     swaps.push({ from, qty, role: group.role, options });
   }
-  swaps.sort((a, b) => (b.options[0]?.saving ?? -Infinity) - (a.options[0]?.saving ?? -Infinity));
+  swaps.sort((a, b) => (b.options[0]?.riseAvoided ?? -Infinity) - (a.options[0]?.riseAvoided ?? -Infinity));
 
   const storables = priced.mine.filter((r) => STORABLES.has(r.key) && basket[r.key] > 0);
   const storablesChecked: BoardRow[] = [];
@@ -151,7 +158,20 @@ export function buildPlan(board: { rows: BoardRow[]; run: Run | null }, basket: 
       (b.kind === "buy_now" ? b.saving : 0) - (a.kind === "buy_now" ? a.saving : 0),
   );
 
-  const swapsPerDay = swaps.reduce((acc, s) => acc + Math.max(0, s.options[0]?.saving ?? 0), 0);
+  // headline: each substitute counted once (greedy by rise avoided), so one item cannot replace three
+  const used = new Set<string>();
+  let swapsPerDay = 0;
+  for (const s of swaps) {
+    const best = s.options.find((o) => o.riseAvoided > 0 && !used.has(o.sub.row.key));
+    if (best) {
+      used.add(best.sub.row.key);
+      swapsPerDay += best.riseAvoided;
+    }
+  }
+  const risePerDay = priced.mine.reduce((acc, row) => {
+    const o = outlook(row);
+    return acc + (o && o.mid > o.today ? basket[row.key] * (o.mid - o.today) : 0);
+  }, 0);
   const buyAheadWeek = buyAhead.reduce((acc, b) => acc + (b.kind === "buy_now" ? b.saving : 0), 0);
 
   const targetDate =
@@ -163,7 +183,7 @@ export function buildPlan(board: { rows: BoardRow[]; run: Run | null }, basket: 
     buyAhead,
     storablesChecked,
     storablesNoForecast,
-    saving: { swapsPerDay, buyAheadWeek, perDay: swapsPerDay + buyAheadWeek / 7 },
+    saving: { swapsPerDay, buyAheadWeek, perDay: swapsPerDay + buyAheadWeek / 7, risePerDay },
     targetDate,
     dataDate: board.run?.dataDate ?? null,
   };

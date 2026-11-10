@@ -8,11 +8,13 @@ import {
   Bell,
   ChevronsUpDown,
   CircleUser,
+  ClipboardList,
   Home,
   LayoutDashboard,
   LineChart,
   LogOut,
   Menu,
+  ShieldCheck,
   Target,
   X,
   type LucideIcon,
@@ -31,7 +33,7 @@ import {
 import { authClient } from "@/lib/auth/client";
 import { cn } from "@/lib/utils";
 
-export type ShellUser = { name: string | null; email: string; image: string | null };
+export type ShellUser = { name: string | null; email: string; image: string | null; isAdmin?: boolean };
 
 const NAV: { href: string; label: string; icon: LucideIcon; match: (p: string) => boolean }[] = [
   { href: "/app", label: "Overview", icon: LayoutDashboard, match: (p) => p === "/app" },
@@ -42,14 +44,18 @@ const NAV: { href: string; label: string; icon: LucideIcon; match: (p: string) =
     match: (p) => p.startsWith("/app/prices") || p.startsWith("/app/items"),
   },
   { href: "/app/kitchen", label: "My kitchen", icon: ChefHat, match: (p) => p.startsWith("/app/kitchen") },
+  { href: "/app/planner", label: "Menu planner", icon: ClipboardList, match: (p) => p.startsWith("/app/planner") },
   { href: "/app/alerts", label: "Alerts", icon: Bell, match: (p) => p.startsWith("/app/alerts") },
   { href: "/app/track-record", label: "Track record", icon: Target, match: (p) => p.startsWith("/app/track-record") },
   { href: "/app/account", label: "Account", icon: CircleUser, match: (p) => p.startsWith("/app/account") },
 ];
 
+// shown only to admins (the server decides who is one; the page itself checks again)
+const ADMIN_NAV = { href: "/app/admin", label: "Ops console", icon: ShieldCheck, match: (p: string) => p.startsWith("/app/admin") };
+
 function titleFor(path: string): string {
   if (path.startsWith("/app/items")) return "Item outlook";
-  return NAV.find((n) => n.match(path))?.label ?? "Mila";
+  return [...NAV, ADMIN_NAV].find((n) => n.match(path))?.label ?? "Mila";
 }
 
 export function initials(name?: string | null, email?: string | null) {
@@ -67,10 +73,10 @@ function useSignOut() {
   };
 }
 
-function NavList({ path, onNavigate }: { path: string; onNavigate?: () => void }) {
+function NavList({ path, onNavigate, isAdmin }: { path: string; onNavigate?: () => void; isAdmin?: boolean }) {
   return (
     <ul className="space-y-0.5">
-      {NAV.map((n) => {
+      {(isAdmin ? [...NAV, ADMIN_NAV] : NAV).map((n) => {
         const active = n.match(path);
         const Icon = n.icon;
         return (
@@ -146,7 +152,7 @@ function SidebarBody({ user, path, onNavigate }: { user: ShellUser; path: string
         </Link>
       </div>
       <nav aria-label="App" className="flex-1 px-2.5 pt-2">
-        <NavList path={path} onNavigate={onNavigate} />
+        <NavList path={path} onNavigate={onNavigate} isAdmin={user.isAdmin} />
       </nav>
       <div className="mx-2.5 mb-3 rounded-lg border border-dashed p-3 text-xs leading-relaxed text-muted-foreground">
         <span className="font-medium text-foreground">Email digest</span> every Monday and Thursday evening, once your
