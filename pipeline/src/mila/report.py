@@ -27,7 +27,7 @@ def _spike_row(name: str, s: dict) -> str:
             f"| {s['n_true']} |")
 
 
-def _ditwah(res: pd.DataFrame) -> str:
+def _ditwah(res: pd.DataFrame, threshold: float, col: str) -> str:
     """Cyclone Ditwah (late Nov 2025): what Mila said for up-country vegetables in the weeks around it."""
     w = res[(res["obs_date"] >= "2025-11-10") & (res["obs_date"] <= "2025-12-20")
             & res["item_key"].isin(["carrot", "beans", "cabbage", "tomato"])
@@ -39,12 +39,12 @@ def _ditwah(res: pd.DataFrame) -> str:
     for _, r in w[w["obs_date"].dt.dayofweek.isin([0, 3])].iterrows():
         pc = lambda v: f"{(math.exp(v) - 1) * 100:+.0f}%"  # noqa: E731
         lines.append(f"| {r['obs_date']:%d %b} | {r['item_key']} | {pc(r['y'])} | {pc(r['q50'])} | "
-                     f"{pc(r['q10'])} to {pc(r['q90'])} | {r['p_spike_clf'] * 100:.0f}% | "
+                     f"{pc(r['q10'])} to {pc(r['q90'])} | {r[col] * 100:.0f}% | "
                      f"{'yes' if r['abstain'] else 'no'} |")
     hit = w[w["spike"] == 1]
-    warned = int(((hit["p_spike_clf"] >= 0.5) & ~hit["abstain"]).sum())
+    warned = int(((hit[col] >= threshold) & hit["spikes_known"] & ~hit["abstain"]).sum())
     lines.append(f"\nSpike days in this window (Pettah wholesale, 4 up-country/dry-zone vegetables): {len(hit)}; "
-                 f"warned at a 50% threshold: {warned}.")
+                 f"warned at the live threshold ({threshold:.2f}): {warned}.")
     return "\n".join(lines)
 
 
@@ -145,7 +145,7 @@ Mila abstained on {_pct(s['abstain_rate'])} of hold-out forecasts. Median-foreca
 
 ## Case study: Cyclone Ditwah (late November 2025)
 
-{_ditwah(res)}
+{_ditwah(res, best['threshold'], col)}
 
 ## Limits
 

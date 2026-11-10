@@ -62,6 +62,30 @@ forecast belongs to a run with its data date and model version.
   average instead of the previous day, so the echo check does not cover them; golden values do.
 - Golden values from one report per layout era are pinned in `pipeline/tests/test_parse_golden.py`.
 
+## Results (rolling-origin backtest, hold-out 2024-01 to 2026-11)
+
+Quarterly refits from 2019; each origin sees only outcomes known before it; 88,645 hold-out forecasts (every
+item, market and price type, 7 days ahead). Spike settings were chosen on 2019-2023 only. Full scorecard,
+including the precision/recall table and the Cyclone Ditwah case study: [`reports/backtest.md`](reports/backtest.md).
+
+| Proposal question | Target (proposal §9) | Result |
+|---|---|---|
+| Does it catch spikes? (25%+ within 7 days) | F1 at least 10% above the best baseline | **F1 0.406** vs 0.150 (last week's trend rule) and 0.146 (rainfall rule) |
+| | precision >= 0.6 | **Not met** at the chosen setting: 31% precision, 58% recall. 64% precision is available at a 0.6 threshold but catches only 6% of spikes; the table in the scorecard lets an owner pick |
+| Is the central forecast useful? | MASE < 1 | **0.959** vs persistence; seasonal naive is far worse (0.150 vs 0.098 MAE) |
+| Are the ranges honest? | 80% range covers 77-83%, no item below 70% | **80.4%** after CQR (78.4% before); lowest item 72.3% (imported nadu) |
+| Does abstaining help? | higher error where it abstained | **0.231 vs 0.091** (median-forecast error where it abstained vs answered; 2.9% abstained) |
+| Does weather matter? | gain on up-country crops | spike F1 **0.444 vs 0.394** without rainfall features; MAE 0.160 vs 0.165 (no Diebold-Mariano test run) |
+| Is it worth acting on? | Rs saved per week | not run in this build |
+
+**Cyclone Ditwah (November 2025): warned, but badly underestimated the size.** For Pettah wholesale beans,
+cabbage, carrot and tomato, 34 trading days between 10 and 28 November were followed by a 25%+ rise; at the live
+threshold Mila warned on **24 of them (71%)**, first on the day of (or the day after) each vegetable's first spike.
+But its median forecast stayed at +2-5% while prices rose 100-300% in the week of the cyclone, so the ranges were far
+too narrow. The model only uses rain that has already fallen; the cyclone's rain arrived with it. The
+forecast-rain feature the proposal describes (Open-Meteo historical forecasts, available from 2022) is the first
+improvement to make. On 1 December, with prices outside anything in its history, Mila abstained.
+
 ## Data rights and conduct
 
 - **CBSL Daily Price Report**: public statistical release, attributed on every page and message. Raw PDFs are
