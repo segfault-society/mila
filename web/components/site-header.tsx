@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AuthButton } from "@/components/auth-button";
 
 export function SiteHeader({ homeHref = "/" }: { homeHref?: string }) {
   return (
@@ -29,6 +30,7 @@ export function SiteHeader({ homeHref = "/" }: { homeHref?: string }) {
           >
             How it works
           </Link>
+          <AuthButton />
         </nav>
       </div>
     </header>
