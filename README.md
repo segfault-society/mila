@@ -46,14 +46,20 @@ forecast belongs to a run with its data date and model version.
 
 ## Data quality
 
-- **Parser accuracy check that comes free:** every report repeats the previous trading day's price ("Yesterday" /
-  "Last Friday"). Comparing that echo with the previous day's own report checks the parser on every cell.
-  On the first 64 reports parsed (all layout eras): **7,360 of 7,366 echoes match exactly (99.92%)**, above the
-  99.5% target. The 6 differences are CBSL revisions and are logged.
-- **Held back, not guessed:** reports the parser cannot place, or whose title date disagrees with the listing,
-  go to `parse_status = 'failed' | 'review'` with the reason in `validation_issues`. On the full archive that is
-  about 4% of 2016-2019 reports (2017-19 layout variants, and a run of June 2017 reports whose title date is a
-  week before the listing date). They are a review queue; nothing unvalidated enters `prices`.
+- **Archive:** 2,430 reports from 1 Aug 2016 to 9 Nov 2026; **2,329 trading days parsed and stored, 265,927
+  prices** (35 items, up to 6 market/price-type columns).
+- **Parser accuracy check that comes free:** since 2019 every report repeats the previous trading day's price
+  ("Yesterday" / "Last <weekday>"). Comparing that echo with the previous day's own report checks the parser
+  on every cell: **208,007 of 209,389 echoes match exactly (99.34%)**. No item or column has a systematic error
+  (no series has more than 15 mismatches in a year); the misses concentrate on 12 report days where the
+  comparison column refers to a different day than the previous report (2020 lockdown gaps of 10-34 days, header
+  dates printed as the report's own date). **Excluding those 12 days: 207,567 / 208,223 = 99.68%**, above the
+  99.5% target. By year: 2019 95.6%, 2020 96.8%, 2021 99.97%, 2022 98.8%, 2023-2026 99.8-99.99%.
+- **Held back, not guessed:** reports the parser cannot place (46), or whose title date disagrees with the
+  listing (55, mostly a run of June 2017 reports titled a week before their listing date), go to
+  `parse_status = 'failed' | 'review'` with the reason in `validation_issues`, about 4% of 2016-2019 reports.
+  They are a review queue; nothing unvalidated enters `prices`. 2016-2018 reports compare against a 5-day
+  average instead of the previous day, so the echo check does not cover them; golden values do.
 - Golden values from one report per layout era are pinned in `pipeline/tests/test_parse_golden.py`.
 
 ## Data rights and conduct
