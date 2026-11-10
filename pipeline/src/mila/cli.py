@@ -194,7 +194,10 @@ def daily(skip_crawl: bool = False) -> None:
         typer.echo(f"scored {score_forecasts(conn)} forecasts against real prices")
         last_run = conn.execute("select max(data_date) from forecast_runs").fetchone()[0]
         if counts.get("parsed") or last_run is None or last_run < latest:
-            typer.echo(f"forecast run {run_forecast(conn)}")
+            from mila.alerts import run_alerts
+
+            run_id = run_forecast(conn)
+            typer.echo(f"forecast run {run_id}; alerts: {run_alerts(conn, run_id)}")
         else:
             typer.echo("no new prices; forecast unchanged")
 
@@ -207,6 +210,16 @@ def score() -> None:
 
     with connect() as conn:
         typer.echo(f"scored {score_forecasts(conn)} forecasts; live record: {live_summary(conn)}")
+
+
+@app.command()
+def alerts(send: bool = typer.Option(True, help="email owners (needs RESEND_API_KEY)")) -> None:
+    """Check every active price alert against the latest forecast run; record and email new ones."""
+    from mila.alerts import run_alerts
+    from mila.db import connect
+
+    with connect() as conn:
+        typer.echo(f"alerts: {run_alerts(conn, send=send)}")
 
 
 @app.command()
