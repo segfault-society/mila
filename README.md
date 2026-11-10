@@ -10,7 +10,7 @@ ModelX 2.0, team **Segfault Society** (Informatics Institute of Technology).
 
 | | |
 |---|---|
-| Live dashboard | https://mila-taprona.vercel.app |
+| Live product | https://mila-taprona.vercel.app (homepage; sign in with Google or email at `/sign-in`; the app is under `/app`: Overview, Prices, My kitchen, Track record, Account) |
 | Scorecard (backtest) | [`reports/backtest.md`](reports/backtest.md) |
 | Unattended pipeline | Trigger.dev project `mila` (every 30 min, 15:00-21:00 Sri Lanka time, trading days) |
 
@@ -109,8 +109,8 @@ schedules.
 Cut or not yet done (in the proposal's own cut order): WhatsApp; Sinhala templates; fish and fruit modelling;
 the 14-day horizon; FX features (LKR/USD, LKR/INR); mining CBSL's commentary text; OCR (no scanned reports were
 found); the web onboarding form (owners are added with `mila subscriber-add`); SARIMAX and LSTM baselines; the
-money-saved simulation. **SMS sending is dry-run** (messages are recorded in `messages`) until an SMS gateway
-account exists. The LLM parsing fallback is not wired in: the deterministic parser plus the review queue covered
+money-saved simulation. **Email digests are live** (Resend, from `mila@taprona.com`); **SMS sending is dry-run** (recorded in
+`messages`) until an SMS gateway account exists. The LLM parsing fallback is not wired in: the deterministic parser plus the review queue covered
 the archive.
 
 ## Run it
