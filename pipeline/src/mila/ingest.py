@@ -11,7 +11,7 @@ from pathlib import Path
 import psycopg
 
 from mila.cbsl.crawl import load_index
-from mila.cbsl.parse import ParseError, ParsedReport, parse_pdf
+from mila.cbsl.parse import ParsedReport, ParseError, parse_pdf
 from mila.cbsl.validate import Series, validate
 from mila.config import PDF_DIR, RAW_INDEX
 

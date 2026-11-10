@@ -72,10 +72,14 @@ def download_pdf(client: PoliteClient, link: ReportLink, page: int,
 
 
 def crawl(start_page: int = 0, end_page: int | None = None, client: PoliteClient | None = None,
-          index_path: Path = RAW_INDEX, pdf_dir: Path = PDF_DIR) -> Iterator[dict]:
-    """Walk listing pages newest-first, downloading every PDF not yet in the index. Yields index records."""
+          index_path: Path = RAW_INDEX, pdf_dir: Path = PDF_DIR, known_urls: set[str] | None = None) -> Iterator[dict]:
+    """Walk listing pages newest-first, downloading every PDF not yet known. Yields index records.
+
+    `known_urls` (e.g. from the database) is added to what the local index already holds, so a fresh cloud
+    runner with an empty disk does not re-download reports the database already has.
+    """
     client = client or PoliteClient()
-    done = {u for u, r in load_index(index_path).items() if r.get("status") == "ok"}
+    done = {u for u, r in load_index(index_path).items() if r.get("status") == "ok"} | (known_urls or set())
     page = start_page
     last = end_page
     while last is None or page <= last:

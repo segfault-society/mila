@@ -30,7 +30,8 @@ def crawl(start_page: int = 0,
 @app.command()
 def migrate() -> None:
     """Apply database migrations and sync the item catalogue."""
-    from mila.db import connect, migrate as run, sync_items
+    from mila.db import connect, sync_items
+    from mila.db import migrate as run
 
     with connect() as conn:
         typer.echo(f"applied: {run(conn) or 'nothing new'}")
@@ -49,6 +50,123 @@ def ingest(reparse: bool = False, workers: int = 6) -> None:
         typer.echo(f"ingest: {counts}")
         latest = conn.execute("select max(obs_date) from prices").fetchone()[0]
         mark_source(conn, "cbsl_prices", data_date=latest)
+
+
+@app.command()
+def weather(full: bool = False) -> None:
+    """Fetch Open-Meteo rainfall (archive + forecast) for the growing-area points."""
+    from mila.db import connect, mark_source
+    from mila.weather import update_weather
+
+    with connect() as conn:
+        try:
+            counts = update_weather(conn, full=full)
+        except Exception as exc:
+            mark_source(conn, "open_meteo", error=str(exc))
+            raise
+        latest = conn.execute("select max(obs_date) from weather_daily where source = 'archive'").fetchone()[0]
+        mark_source(conn, "open_meteo", data_date=latest)
+        typer.echo(f"weather rows upserted: {counts}")
+
+
+@app.command()
+def forecast() -> None:
+    """Fit, calibrate and forecast every series from the latest report; store a forecast run."""
+    from mila.db import connect
+    from mila.forecast import run_forecast
+
+    with connect() as conn:
+        typer.echo(f"forecast run {run_forecast(conn)}")
+
+
+@app.command()
+def backtest(start: str = "2022-01-01", holdout: str = "2024-01-01", step_months: int = 3,
+             ablation: bool = True, out: str = "../reports") -> None:
+    """Rolling-origin backtest + baselines; writes reports/backtest.md and backtest_scores."""
+    from mila.db import connect
+    from mila.report import write_backtest_report
+
+    with connect() as conn:
+        path = write_backtest_report(conn, start=start, holdout=holdout, step_months=step_months,
+                                     ablation=ablation, out_dir=out)
+        typer.echo(f"wrote {path}")
+
+
+@app.command("subscriber-add")
+def subscriber_add(name: str, basket: str = typer.Option(..., help="item=qty,item=qty (kg or units per day)"),
+                   market: str = "pettah", price_type: str = "wholesale",
+                   phone: str = typer.Option(None, help="E.164, e.g. +9477xxxxxxx; omit for a dry-run demo")) -> None:
+    """Add an eatery owner. Prints their private dashboard token."""
+    import json
+    import secrets
+
+    from mila.db import connect
+    from mila.items import ITEMS_BY_KEY
+
+    items = dict(kv.split("=") for kv in basket.split(","))
+    unknown = [k for k in items if k not in ITEMS_BY_KEY]
+    if unknown:
+        raise typer.BadParameter(f"unknown items: {unknown}")
+    token = secrets.token_urlsafe(9)
+    with connect() as conn:
+        conn.execute("""insert into subscribers (name, phone_e164, market, price_type, basket, token)
+                        values (%s, %s, %s, %s, %s, %s)""",
+                     (name, phone, market, price_type, json.dumps({k: float(v) for k, v in items.items()}), token))
+        conn.commit()
+    typer.echo(f"token: {token}  (dashboard: /o/{token})")
+
+
+@app.command()
+def digest(send_now: bool = typer.Option(False, "--send", help="record/send instead of just printing")) -> None:
+    """Build the digest for every active subscriber (dry-run sends unless an SMS provider is configured)."""
+    from datetime import date
+
+    from mila.db import connect
+    from mila.digest import build_digest
+    from mila.sms import send
+
+    with connect() as conn:
+        subs = conn.execute("select id, phone_e164 from subscribers where active order by id").fetchall()
+        for sid, phone in subs:
+            run_id, body = build_digest(conn, sid, date.today())
+            typer.echo(f"--- subscriber {sid} ({len(body)} chars)\n{body}")
+            if send_now:
+                typer.echo(f"status: {send(conn, sid, run_id, phone, body)}")
+
+
+@app.command()
+def daily(skip_crawl: bool = False) -> None:
+    """The unattended job: new CBSL report(s) -> ingest -> weather -> forecast (only when there is new data)."""
+    from mila.cbsl.crawl import crawl as run_crawl
+    from mila.db import connect, mark_source
+    from mila.forecast import run_forecast
+    from mila.ingest import ingest_pending, register_documents
+    from mila.weather import update_weather
+
+    with connect() as conn:
+        if not skip_crawl:
+            try:
+                known = {r[0] for r in conn.execute("select source_url from raw_documents")}
+                new = list(run_crawl(start_page=0, end_page=0, known_urls=known))
+                typer.echo(f"crawl: {len(new)} new PDFs")
+            except Exception as exc:
+                mark_source(conn, "cbsl_prices", error=str(exc))
+                raise
+        register_documents(conn)
+        counts = ingest_pending(conn, workers=2)
+        latest = conn.execute("select max(obs_date) from prices").fetchone()[0]
+        mark_source(conn, "cbsl_prices", data_date=latest)
+        try:
+            update_weather(conn)
+            mark_source(conn, "open_meteo", data_date=conn.execute(
+                "select max(obs_date) from weather_daily where source = 'archive'").fetchone()[0])
+        except Exception as exc:  # stale weather is flagged, not fatal: the model has a no-weather fallback
+            mark_source(conn, "open_meteo", error=str(exc))
+        last_run = conn.execute("select max(data_date) from forecast_runs").fetchone()[0]
+        if counts.get("parsed") or last_run is None or last_run < latest:
+            typer.echo(f"forecast run {run_forecast(conn)}")
+        else:
+            typer.echo("no new prices; forecast unchanged")
 
 
 @app.command()
