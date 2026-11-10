@@ -12,6 +12,7 @@ ModelX 2.0, team **Segfault Society** (Informatics Institute of Technology).
 |---|---|
 | Live product | https://mila-taprona.vercel.app (homepage; sign in with Google or email at `/sign-in`; the app is under `/app`: Overview, Prices, My kitchen, Track record, Account) |
 | Scorecard (backtest) | [`reports/backtest.md`](reports/backtest.md) |
+| Public data API | [`/developers`](https://mila-taprona.vercel.app/developers) (`/api/v1/items`, `/prices`, `/forecasts/latest`, `/track-record`; JSON or CSV) |
 | Unattended pipeline | Trigger.dev project `mila` (every 30 min, 15:00-21:00 Sri Lanka time, trading days) |
 
 ## How it works
@@ -43,6 +44,19 @@ Open-Meteo ───────────────────────
 
 Every price row points at the raw document it came from (`prices.source_doc_id -> raw_documents`), and every
 forecast belongs to a run with its data date and model version.
+
+## Product features
+
+- **My kitchen**: an owner's basket (items, market, daily amounts, rice packets a day) priced today and next week.
+- **Menu planner**: swaps that avoid next week's expected rises (each substitute counted once; the price gap
+  between items is shown separately and never counted as a saving), buy-ahead advice for storables, cost per packet.
+- **Price alerts**: spike risk at or above X% (one item or any basket item), next-week price above/below Rs X.
+  Checked after every new forecast, recorded once per day's report, shown in the app and emailed (Resend).
+- **Weekly digest** by email every Monday and Thursday evening; SMS in dry-run until a gateway is approved.
+- **Track record**: hold-out scorecard plus live scoring of every forecast from 17 Nov 2026.
+- **Ops console** (admins only, matched by Neon Auth user ID): source health, forecast runs, the CBSL review
+  queue, the message log.
+- **Public API** with a developer page: derived data only, attribution in every response.
 
 ## Data quality
 

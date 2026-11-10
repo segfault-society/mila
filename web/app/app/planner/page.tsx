@@ -135,11 +135,11 @@ export default async function PlannerPage() {
 
 function Headline({ plan }: { plan: Plan }) {
   const { swapsPerDay, buyAheadWeek, perDay, risePerDay } = plan.saving;
-  const swapCount = plan.swaps.filter((s) => (s.options[0]?.riseAvoided ?? 0) >= 1).length;
+  const swapCount = plan.saving.swapsUsed;
   const buyCount = plan.buyAhead.filter((b) => b.kind === "buy_now").length;
   const parts: string[] = [];
   if (swapsPerDay >= 1) {
-    parts.push(`Swapping ${swapCount} rising item${swapCount === 1 ? "" : "s"} for steadier ones: about ${rsw(swapsPerDay)} a day`);
+    parts.push(`The best ${swapCount === 1 ? "swap" : `${swapCount} swaps`} (each substitute used once): about ${rsw(swapsPerDay)} a day`);
   }
   if (buyAheadWeek >= 1) {
     parts.push(

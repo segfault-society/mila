@@ -79,7 +79,7 @@ export type Plan = {
   /** storables in the basket without a forecast this week */
   storablesNoForecast: BoardRow[];
   /** forecast-driven only: rise avoided by swaps (each substitute used once) + buy-ahead savings */
-  saving: { swapsPerDay: number; buyAheadWeek: number; perDay: number; risePerDay: number };
+  saving: { swapsPerDay: number; swapsUsed: number; buyAheadWeek: number; perDay: number; risePerDay: number };
   targetDate: string | null;
   dataDate: string | null;
 };
@@ -183,7 +183,7 @@ export function buildPlan(board: { rows: BoardRow[]; run: Run | null }, basket: 
     buyAhead,
     storablesChecked,
     storablesNoForecast,
-    saving: { swapsPerDay, buyAheadWeek, perDay: swapsPerDay + buyAheadWeek / 7, risePerDay },
+    saving: { swapsPerDay, swapsUsed: used.size, buyAheadWeek, perDay: swapsPerDay + buyAheadWeek / 7, risePerDay },
     targetDate,
     dataDate: board.run?.dataDate ?? null,
   };
