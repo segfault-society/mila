@@ -97,7 +97,7 @@ export function KitchenView({
     <>
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Rice-packet cost</CardTitle>
+          <CardTitle className="text-lg">Daily basket cost</CardTitle>
           <CardDescription>What one day of your basket costs at {label} prices</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">

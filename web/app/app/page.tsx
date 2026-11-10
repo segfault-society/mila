@@ -193,8 +193,8 @@ export default async function OverviewPage() {
                 time on trading days, then refreshes rainfall and the 7-day outlook.
               </p>
               <p>
-                SMS digest: <span className="text-foreground">in pilot</span>. Selected owners get the week&apos;s
-                warnings by text message.
+                Your digest: <span className="text-foreground">by email</span> every Monday and Thursday evening, with
+                your basket&apos;s warnings and next week&apos;s cost. SMS is in pilot with a few eateries.
               </p>
             </CardContent>
           </Card>

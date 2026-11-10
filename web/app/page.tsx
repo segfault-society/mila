@@ -292,12 +292,12 @@ export default async function Home() {
               <article className="flex flex-col rounded-2xl border bg-card p-6">
                 <div className="flex items-center justify-between">
                   <MessageSquareText className="size-5 text-brand" aria-hidden />
-                  <span className="rounded-full border px-2 py-0.5 text-xs text-muted-foreground">Pilot, coming soon</span>
+                  <span className="rounded-full border px-2 py-0.5 text-xs text-muted-foreground">Email live, SMS in pilot</span>
                 </div>
-                <h3 className="mt-4 text-lg font-semibold tracking-tight">A weekly SMS digest</h3>
+                <h3 className="mt-4 text-lg font-semibold tracking-tight">The week&apos;s warnings, sent to you</h3>
                 <p className="mt-2 text-[15px] leading-relaxed text-muted-foreground">
-                  A short text with the week&apos;s warnings, for owners who don&apos;t open apps. Being tried with a few
-                  eateries first.
+                  Every Monday and Thursday evening, your basket&apos;s warnings arrive by email. A short SMS version, for
+                  owners who don&apos;t open apps, is being tried with a few eateries first.
                 </p>
                 <div className="mt-6 rounded-xl border bg-background p-4">
                   <p className="text-xs text-muted-foreground">Example message from today&apos;s forecast</p>

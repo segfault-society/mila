@@ -147,8 +147,8 @@ function SidebarBody({ user, path, onNavigate }: { user: ShellUser; path: string
         <NavList path={path} onNavigate={onNavigate} />
       </nav>
       <div className="mx-2.5 mb-3 rounded-lg border border-dashed p-3 text-xs leading-relaxed text-muted-foreground">
-        <span className="font-medium text-foreground">SMS digest</span> is in pilot. Owners in the pilot get the week&apos;s
-        warnings by text message.
+        <span className="font-medium text-foreground">Email digest</span> every Monday and Thursday evening, once your
+        kitchen is set up. SMS is in pilot.
       </div>
       <div className="border-t p-2">
         <UserCard user={user} />
