@@ -1,0 +1,21 @@
+# data: raw CBSL PDFs stay private (see README "Data rights")
+data/
+!data/.gitkeep
+*.pdf
+# env
+.env
+.env.*
+!.env.example
+# python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.ruff_cache/
+# node
+node_modules/
+.next/
+.vercel/
+.trigger/
+# os
+.DS_Store
