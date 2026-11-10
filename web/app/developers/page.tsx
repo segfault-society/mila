@@ -311,7 +311,8 @@ export default async function DevelopersPage() {
             exampleNote={`first 3 of ${ex.pricesExample.meta.count} rows`}
           >
             <p className="text-sm text-muted-foreground">
-              CSV columns: <Inline>date,item,market,type,price_lkr,unit</Inline>
+              CSV columns: <Inline>date,item,market,type,price_lkr,unit</Inline>. A cut-off CSV says so in the{" "}
+              <Inline>X-Truncated</Inline> header, with the next page in <Inline>Link</Inline>.
             </p>
           </Endpoint>
 

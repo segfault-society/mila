@@ -24,20 +24,22 @@ export const GET = handler(async (req) => {
 
   const { rows, truncated, nextTo } = await apiPrices(from, to, items, market, type);
 
-  if (format === "csv") {
-    return csvResponse(
-      `mila-prices-${from}-to-${to}.csv`,
-      ["date", "item", "market", "type", "price_lkr", "unit"],
-      rows.map((r) => [r.date, r.item, r.market, r.type, r.price, r.unit]),
-    );
-  }
-
   let next: string | null = null;
   if (nextTo) {
     const u = new URL(req.nextUrl);
     u.searchParams.set("from", from);
     u.searchParams.set("to", nextTo);
     next = u.toString();
+  }
+
+  if (format === "csv") {
+    // CSV has no meta block, so truncation is reported in headers
+    return csvResponse(
+      `mila-prices-${from}-to-${to}.csv`,
+      ["date", "item", "market", "type", "price_lkr", "unit"],
+      rows.map((r) => [r.date, r.item, r.market, r.type, r.price, r.unit]),
+      next ? { "X-Truncated": "true", Link: `<${next}>; rel="next"` } : { "X-Truncated": "false" },
+    );
   }
   return jsonResponse(rows, {
     count: rows.length,

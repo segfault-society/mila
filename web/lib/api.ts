@@ -64,11 +64,18 @@ function csvCell(v: unknown): string {
 }
 
 /** RFC 4180 CSV: one header row, then data. Attribution travels in the X-Data-Source header. */
-export function csvResponse(filename: string, columns: string[], rows: unknown[][]) {
+export function csvResponse(
+  filename: string,
+  columns: string[],
+  rows: unknown[][],
+  extraHeaders: Record<string, string> = {},
+) {
   const body = [columns, ...rows].map((r) => r.map(csvCell).join(",")).join("\r\n") + "\r\n";
   return new Response(body, {
     headers: {
       ...BASE_HEADERS,
+      ...extraHeaders,
+      "Access-Control-Expose-Headers": "X-Data-Source, X-Truncated, Link",
       "Cache-Control": CACHE_CONTROL,
       "Content-Type": "text/csv; charset=utf-8",
       "Content-Disposition": `attachment; filename="${filename}"`,
