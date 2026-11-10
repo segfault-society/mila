@@ -7,6 +7,7 @@ import { auth } from "@/lib/auth/server";
 import { getItems } from "@/lib/data";
 import { db } from "@/lib/db";
 import { MARKET_VIEWS } from "@/lib/markets";
+import { parsePackets } from "@/lib/planner";
 
 export type KitchenFormState = { error?: string };
 
@@ -31,10 +32,14 @@ export async function createKitchen(_prev: KitchenFormState, form: FormData): Pr
   }
   if (Object.keys(basket).length < 3) return { error: "Add at least three items you buy." };
 
+  const packets = parsePackets(form.get("packets"));
+  if ("error" in packets) return { error: packets.error };
+
   const token = randomBytes(9).toString("base64url");
   await db()`
-    insert into subscribers (name, market, price_type, basket, token, user_id, email)
-    values (${name}, ${view.market}, ${view.type}, ${JSON.stringify(basket)}::jsonb, ${token}, ${user.id}, ${user.email})
+    insert into subscribers (name, market, price_type, basket, token, user_id, email, packets_per_day)
+    values (${name}, ${view.market}, ${view.type}, ${JSON.stringify(basket)}::jsonb, ${token}, ${user.id}, ${user.email},
+            ${packets.value})
     on conflict (user_id) do nothing`;
   revalidatePath("/app", "layout");
   redirect("/app/kitchen");

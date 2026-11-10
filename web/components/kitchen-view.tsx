@@ -1,3 +1,5 @@
+import Link from "next/link";
+import { ChevronRight, ClipboardList } from "lucide-react";
 import { ItemCard } from "@/components/item-card";
 import { Notice } from "@/components/notice";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -74,11 +76,14 @@ export function KitchenView({
   board,
   label,
   itemHref,
+  plannerHref,
 }: {
   sub: Subscriber;
   board: Board;
   label: string;
   itemHref: (key: string) => string;
+  /** signed-in app only: link to the menu planner (left out on the public /o/[token] page) */
+  plannerHref?: string;
 }) {
   const { run, marketLatest } = board;
   const hasRun = run != null;
@@ -165,6 +170,24 @@ export function KitchenView({
           )}
         </CardContent>
       </Card>
+
+      {plannerHref && (
+        <Link
+          href={plannerHref}
+          className="mt-5 flex items-center gap-4 rounded-xl bg-brand-soft/50 p-4 ring-1 ring-brand/20 transition hover:ring-brand/40"
+        >
+          <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-background text-brand ring-1 ring-brand/20">
+            <ClipboardList className="size-5" aria-hidden />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block font-medium">Plan next week&apos;s menu</span>
+            <span className="mt-0.5 block text-sm text-muted-foreground">
+              Swaps to consider for items about to rise, which storables to buy now, and your cost per packet.
+            </span>
+          </span>
+          <ChevronRight className="size-5 shrink-0 text-muted-foreground" aria-hidden />
+        </Link>
+      )}
 
       {!hasRun && (
         <Notice className="mt-5">
