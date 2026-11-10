@@ -2,50 +2,60 @@ import { useId } from "react";
 import { cn } from "@/lib/utils";
 
 /**
- * Mila's mark: a curry leaf whose midrib is a price line that dips, then jumps.
- * The line is knocked out of the leaf (a mask), so it works on any background.
- * The turmeric dot is where the price lands after the jump.
+ * Mila's mark, drawn as an app-icon tile: a lowercase "m" whose last leg climbs into a sharp price spike,
+ * with a turmeric dot over the peak. It reads as "m" + spike, as "mi" (the dot over the peak), and as a hill
+ * with the sun over it: the up-country growing areas whose rain moves the price.
  */
 export function LogoMark({ className, title }: { className?: string; title?: string }) {
   const id = useId().replace(/:/g, "");
   return (
     <svg
-      viewBox="0 0 32 32"
-      className={cn("size-7 shrink-0", className)}
+      viewBox="0 0 40 40"
+      className={cn("size-8 shrink-0", className)}
       role={title ? "img" : undefined}
       aria-hidden={title ? undefined : true}
       aria-label={title}
     >
       <defs>
-        <mask id={`mila-cut-${id}`} maskUnits="userSpaceOnUse" x="0" y="0" width="32" height="32">
-          <rect width="32" height="32" fill="#fff" />
-          <path
-            d="M8.6 23.4 13.4 18.6 16.6 21.2 22.6 12"
-            fill="none"
-            stroke="#000"
-            strokeWidth="2.6"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </mask>
+        <linearGradient id={`mila-tile-${id}`} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor="#2a9d8f" />
+          <stop offset="1" stopColor="#0d4f4a" />
+        </linearGradient>
+        <linearGradient id={`mila-sheen-${id}`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#fff" stopOpacity="0.22" />
+          <stop offset="0.5" stopColor="#fff" stopOpacity="0" />
+        </linearGradient>
       </defs>
-      <path
-        d="M5 27C4.4 15.6 12.2 5.6 25.6 4.4c.9 12.6-8 21.6-20.6 22.6Z"
-        fill="var(--logo-leaf, var(--brand))"
-        mask={`url(#mila-cut-${id})`}
+      <rect width="40" height="40" rx="11" fill={`url(#mila-tile-${id})`} />
+      <rect
+        x="0.5"
+        y="0.5"
+        width="39"
+        height="39"
+        rx="10.5"
+        fill={`url(#mila-sheen-${id})`}
+        stroke="#fff"
+        strokeOpacity="0.12"
       />
-      <path d="M2.8 29.2 6.4 25.6" stroke="var(--logo-leaf, var(--brand))" strokeWidth="2.6" strokeLinecap="round" />
-      <circle cx="26.4" cy="4.2" r="3" fill="var(--logo-accent, var(--turmeric))" />
+      <path
+        d="M7.5 29.5V19a3 3 0 0 1 6 0V29.5M13.5 19a3 3 0 0 1 6 0V24.5L25.5 12.5L31.5 22"
+        fill="none"
+        stroke="#fff"
+        strokeWidth="3.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <circle cx="25.5" cy="7.6" r="2.6" fill="#f2b33d" />
     </svg>
   );
 }
 
-/** Mark plus the lowercase "mila" wordmark. */
+/** Mark plus the "mila" wordmark. */
 export function Logo({ className, markClassName }: { className?: string; markClassName?: string }) {
   return (
-    <span className={cn("inline-flex items-center gap-2", className)}>
+    <span className={cn("inline-flex items-center gap-2.5", className)}>
       <LogoMark className={markClassName} />
-      <span className="text-[19px] leading-none font-semibold tracking-[-0.03em]">mila</span>
+      <span className="text-[21px] leading-none font-bold tracking-[-0.045em]">mila</span>
     </span>
   );
 }
