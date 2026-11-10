@@ -88,6 +88,8 @@ def ingest_pending(conn: psycopg.Connection, pdf_dir: Path = PDF_DIR, workers: i
     docs = conn.execute(
         """select id, report_date, file_name from raw_documents where parse_status = 'pending'
            order by report_date, file_name""").fetchall()
+    # only documents whose PDF is on this machine: a cloud runner must not mark other machines' work failed
+    docs = [d for d in docs if (pdf_dir / d[2]).exists()]
     counts: dict[str, int] = {}
     if not docs:
         return counts

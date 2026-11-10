@@ -65,6 +65,9 @@ def _get(client: httpx.Client, url: str, params: dict) -> dict:
         if r.status_code == 429:
             time.sleep(65 * (attempt + 1))
             continue
+        if r.status_code >= 500:
+            time.sleep(10 * (attempt + 1))
+            continue
         r.raise_for_status()
         return r.json()
     raise RuntimeError(f"Open-Meteo kept rate-limiting {url}")

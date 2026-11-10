@@ -94,6 +94,9 @@ class Model:
         adj = df["item_key"].astype(str).map(self.q_adjust).fillna(self.q_adjust_pooled).to_numpy()
         p["q10"] = p["q10"] - adj
         p["q90"] = p["q90"] + adj
+        # a negative CQR adjustment (model too wide) must not push the bounds past the median
+        p["q10"] = np.minimum(p["q10"], p["q50"])
+        p["q90"] = np.maximum(p["q90"], p["q50"])
         # spike probability read off the calibrated distribution (split normal through q10/q50/q90)
         z = 1.2816
         up = np.maximum((p["q90"] - p["q50"]) / z, 1e-4)

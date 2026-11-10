@@ -1,0 +1,20 @@
+{
+  "name": "mila-scheduler",
+  "private": true,
+  "description": "Trigger.dev schedules that run the Python pipeline (pipeline/) unattended",
+  "type": "module",
+  "scripts": {
+    "trigger:dev": "trigger dev",
+    "trigger:deploy": "trigger deploy"
+  },
+  "dependencies": {
+    "@trigger.dev/python": "4.8.3",
+    "@trigger.dev/sdk": "4.8.3"
+  },
+  "devDependencies": {
+    "@trigger.dev/build": "4.8.3",
+    "trigger.dev": "4.8.3",
+    "typescript": "^5.6.0"
+  },
+  "packageManager": "pnpm@10.30.3"
+}

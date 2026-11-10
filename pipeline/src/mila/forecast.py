@@ -90,10 +90,14 @@ def explain(row: pd.Series, contrib: pd.Series, fc_rain: dict[str, float]) -> li
     return out[:4]
 
 
+DISCONTINUED_DAYS = 30  # a series CBSL has not reported for a month is no longer forecast at all
+
+
 def latest_rows(df: pd.DataFrame, data_date: pd.Timestamp) -> pd.DataFrame:
     d = df[df["obs_date"] <= data_date]
     idx = d.groupby(["item_key", "market", "price_type"], observed=True)["obs_date"].idxmax()
-    return d.loc[idx.to_numpy()].reset_index(drop=True)
+    last = d.loc[idx.to_numpy()].reset_index(drop=True)
+    return last[(data_date - last["obs_date"]).dt.days <= DISCONTINUED_DAYS].reset_index(drop=True)
 
 
 def _git_sha() -> str:

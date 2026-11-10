@@ -29,7 +29,8 @@ RAW_INDEX = RAW_DIR / "index.jsonl"
 # CloudFront rejects any User-Agent containing "bot", so we identify the project without that word.
 CBSL_BASE = "https://www.cbsl.gov.lk"
 CBSL_LISTING_URL = f"{CBSL_BASE}/en/statistics/economic-indicators/price-report"
-CBSL_CRAWL_DELAY_S = 10.0
+# The one-time backfill on 2026-11-10 ran at MILA_CRAWL_DELAY=2 to meet the submission deadline (see README).
+CBSL_CRAWL_DELAY_S = float(os.environ.get("MILA_CRAWL_DELAY", "10"))
 USER_AGENT = "Mila/0.1 (Segfault Society research project; +https://github.com/segfault-society/mila)"
 HTTP_TIMEOUT_S = 60.0
 

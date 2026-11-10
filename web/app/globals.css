@@ -1,0 +1,157 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+/* Light/dark follows the phone's setting (prefers-color-scheme). */
+@custom-variant dark (@media (prefers-color-scheme: dark));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --font-heading: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-brand: var(--brand);
+  --color-brand-soft: var(--brand-soft);
+  --color-spike: var(--spike);
+  --color-spike-soft: var(--spike-soft);
+  --color-rise: var(--rise);
+  --color-rise-soft: var(--rise-soft);
+  --color-steady: var(--steady);
+  --color-steady-soft: var(--steady-soft);
+  --color-fall: var(--fall);
+  --color-fall-soft: var(--fall-soft);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+:root {
+  color-scheme: light dark;
+  --background: oklch(0.982 0.004 90);
+  --foreground: oklch(0.2 0.01 260);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.2 0.01 260);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.2 0.01 260);
+  --primary: oklch(0.24 0.012 260);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.955 0.004 90);
+  --secondary-foreground: oklch(0.24 0.012 260);
+  --muted: oklch(0.953 0.004 90);
+  --muted-foreground: oklch(0.47 0.012 260);
+  --accent: oklch(0.953 0.004 90);
+  --accent-foreground: oklch(0.24 0.012 260);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.91 0.005 90);
+  --input: oklch(0.91 0.005 90);
+  --ring: oklch(0.6 0.02 260);
+  --chart-1: oklch(0.3 0.015 260);
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
+  --grid: oklch(0.92 0.004 90);
+  --radius: 0.75rem;
+
+  /* brand: curry-leaf teal */
+  --brand: oklch(0.47 0.085 190);
+  --brand-soft: oklch(0.95 0.025 190);
+
+  /* signal colours — text on soft background stays above 4.5:1 */
+  --spike: oklch(0.5 0.19 27);
+  --spike-soft: oklch(0.95 0.035 27);
+  --rise: oklch(0.52 0.12 60);
+  --rise-soft: oklch(0.955 0.05 85);
+  --steady: oklch(0.48 0.11 152);
+  --steady-soft: oklch(0.955 0.035 152);
+  --fall: oklch(0.48 0.15 258);
+  --fall-soft: oklch(0.95 0.03 250);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: oklch(0.16 0.006 260);
+    --foreground: oklch(0.96 0.003 90);
+    --card: oklch(0.205 0.008 260);
+    --card-foreground: oklch(0.96 0.003 90);
+    --popover: oklch(0.205 0.008 260);
+    --popover-foreground: oklch(0.96 0.003 90);
+    --primary: oklch(0.93 0.004 90);
+    --primary-foreground: oklch(0.2 0.01 260);
+    --secondary: oklch(0.26 0.008 260);
+    --secondary-foreground: oklch(0.96 0.003 90);
+    --muted: oklch(0.255 0.008 260);
+    --muted-foreground: oklch(0.72 0.01 260);
+    --accent: oklch(0.26 0.008 260);
+    --accent-foreground: oklch(0.96 0.003 90);
+    --destructive: oklch(0.704 0.191 22.216);
+    --border: oklch(1 0 0 / 11%);
+    --input: oklch(1 0 0 / 15%);
+    --ring: oklch(0.6 0.01 260);
+    --chart-1: oklch(0.9 0.005 90);
+    --grid: oklch(1 0 0 / 8%);
+
+    --brand: oklch(0.78 0.09 190);
+    --brand-soft: oklch(0.3 0.04 190);
+
+    --spike: oklch(0.76 0.15 25);
+    --spike-soft: oklch(0.31 0.08 25);
+    --rise: oklch(0.83 0.13 80);
+    --rise-soft: oklch(0.32 0.06 70);
+    --steady: oklch(0.8 0.13 155);
+    --steady-soft: oklch(0.29 0.05 155);
+    --fall: oklch(0.79 0.11 250);
+    --fall-soft: oklch(0.3 0.06 258);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* hide the horizontal scrollbar on the market picker while keeping it scrollable */
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
