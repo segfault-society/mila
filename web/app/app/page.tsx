@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ChefHat, ChevronRight } from "lucide-react";
+import { ChefHat, ChevronRight, ClipboardList } from "lucide-react";
 import { Freshness } from "@/components/freshness";
 import { CostTiles } from "@/components/kitchen-view";
 import { DemoBanner } from "@/components/notice";
@@ -11,6 +11,7 @@ import { priceBasket } from "@/lib/basket";
 import { getBoard, getHealth, getKitchenForUser, getScorecard } from "@/lib/data";
 import { day, pct, perUnit, rs, TZ } from "@/lib/format";
 import { DEFAULT_VIEW, viewLabel, viewQuery } from "@/lib/markets";
+import { buildPlan } from "@/lib/planner";
 import { signalRank } from "@/lib/signals";
 import type { BoardRow } from "@/lib/types";
 
@@ -47,6 +48,7 @@ export default async function OverviewPage() {
   const watch = warnings(board.rows, kitchen ? new Set(Object.keys(kitchen.basket)) : undefined);
   const spikeCount = watch.filter((r) => r.forecast?.signal === "spike").length;
   const priced = kitchen ? priceBasket(board.rows, kitchen.basket) : null;
+  const plan = kitchen && hasRun ? buildPlan(board, kitchen.basket) : null;
   const first = user.name?.split(" ")[0];
 
   return (
@@ -72,20 +74,41 @@ export default async function OverviewPage() {
       <div className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
         <div className="grid content-start gap-4">
           {kitchen && priced ? (
-            <Card>
-              <CardHeader className="flex flex-row flex-wrap items-start justify-between gap-2">
-                <div>
-                  <CardTitle className="text-base">{kitchen.name}</CardTitle>
-                  <CardDescription>One day of your basket at {label}</CardDescription>
-                </div>
-                <Link href="/app/kitchen" className="inline-flex items-center gap-0.5 text-sm text-muted-foreground hover:text-foreground">
-                  Open kitchen <ChevronRight className="size-4" aria-hidden />
-                </Link>
-              </CardHeader>
-              <CardContent>
-                <CostTiles priced={priced} hasRun={hasRun} marketLatest={board.marketLatest} compact />
-              </CardContent>
-            </Card>
+            <>
+              <Card>
+                <CardHeader className="flex flex-row flex-wrap items-start justify-between gap-2">
+                  <div>
+                    <CardTitle className="text-base">{kitchen.name}</CardTitle>
+                    <CardDescription>One day of your basket at {label}</CardDescription>
+                  </div>
+                  <Link href="/app/kitchen" className="inline-flex items-center gap-0.5 text-sm text-muted-foreground hover:text-foreground">
+                    Open kitchen <ChevronRight className="size-4" aria-hidden />
+                  </Link>
+                </CardHeader>
+                <CardContent>
+                  <CostTiles priced={priced} hasRun={hasRun} marketLatest={board.marketLatest} compact />
+                </CardContent>
+              </Card>
+              <Link
+                href="/app/planner"
+                className="flex items-center gap-4 rounded-xl bg-brand-soft/50 p-4 ring-1 ring-brand/20 transition hover:ring-brand/40"
+              >
+                <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-background text-brand ring-1 ring-brand/20">
+                  <ClipboardList className="size-5" aria-hidden />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block font-medium">Menu planner</span>
+                  <span className="mt-0.5 block text-sm text-muted-foreground">
+                    {!plan
+                      ? "Swaps and buy-ahead advice appear here once next week's forecast is published."
+                      : plan.saving.perDay >= 1
+                        ? `Options that could save about ${rs(plan.saving.perDay)} a day next week, from swaps and buying ahead.`
+                        : "No savings to act on this week. See swaps, buy-ahead advice and your cost per packet."}
+                  </span>
+                </span>
+                <ChevronRight className="size-5 shrink-0 text-muted-foreground" aria-hidden />
+              </Link>
+            </>
           ) : (
             <Card className="bg-brand-soft/50 ring-brand/20">
               <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-center">

@@ -57,7 +57,13 @@ export default async function KitchenPage() {
         <Freshness health={health} run={board.run} />
         {board.run?.demo && <DemoBanner />}
       </section>
-      <KitchenView sub={kitchen} board={board} label={label} itemHref={(k) => `/app/items/${k}${q}`} />
+      <KitchenView
+        sub={kitchen}
+        board={board}
+        label={label}
+        itemHref={(k) => `/app/items/${k}${q}`}
+        plannerHref="/app/planner"
+      />
     </main>
   );
 }

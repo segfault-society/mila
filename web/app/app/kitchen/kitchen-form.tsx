@@ -24,6 +24,14 @@ export function KitchenForm({ items, views }: { items: Item[]; views: MarketView
           ))}
         </select>
       </label>
+      <label className="block space-y-1.5">
+        <span className="text-sm font-medium">
+          Rice packets you sell a day <span className="font-normal text-muted-foreground">(optional)</span>
+        </span>
+        <input name="packets" type="number" min={1} max={5000} step={1} inputMode="numeric" placeholder="e.g. 150"
+          className="h-10 w-40 rounded-lg border bg-background px-3 text-sm tabular-nums shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30" />
+        <span className="block text-xs text-muted-foreground">Mila uses this to show what your basket costs per packet.</span>
+      </label>
       <fieldset className="space-y-2">
         <legend className="text-sm font-medium">How much you use per day</legend>
         <p className="text-xs text-muted-foreground">Filled in for a typical 150-packet kitchen. Set 0 for items you don&apos;t buy.</p>
