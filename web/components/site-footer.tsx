@@ -44,6 +44,7 @@ const COLS: { title: string; links: { href: string; label: string; external?: bo
     title: "Data",
     links: [
       { href: "/about", label: "Method and limits" },
+      { href: "/developers", label: "API" },
       { href: "https://www.cbsl.gov.lk/en/statistics/economic-indicators/price-report", label: "CBSL Daily Price Report", external: true },
       { href: "https://open-meteo.com/", label: "Open-Meteo weather", external: true },
     ],
