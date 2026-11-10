@@ -446,28 +446,24 @@ export default async function Home() {
 
         {/* final call to action */}
         <section className="px-4 pb-20 sm:px-6 sm:pb-28">
-          <div className="relative mx-auto max-w-6xl overflow-hidden rounded-3xl bg-foreground px-6 py-14 text-background sm:px-12 sm:py-16">
-            <div
-              aria-hidden
-              className="pointer-events-none absolute -top-24 -right-24 size-80 rounded-full bg-[radial-gradient(closest-side,color-mix(in_oklch,var(--brand)_55%,transparent),transparent)]"
-            />
-            <div className="relative max-w-2xl">
+          <div className="mx-auto max-w-6xl rounded-3xl border bg-[color-mix(in_oklch,var(--brand)_7%,var(--card))] px-6 py-14 sm:px-12 sm:py-16">
+            <div className="max-w-2xl">
               <h2 className="text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
                 Plan next week&apos;s menu with fewer surprises
               </h2>
-              <p className="mt-4 text-[17px] leading-relaxed text-background/70">
+              <p className="mt-4 text-[17px] leading-relaxed text-muted-foreground">
                 Set up your kitchen once. Mila prices it every trading day and tells you what to buy early.
               </p>
               <div className="mt-8 flex flex-wrap gap-3">
                 <Link
                   href="/sign-up"
-                  className="inline-flex h-11 items-center justify-center rounded-lg bg-background px-5 text-[15px] font-medium text-foreground transition-colors hover:bg-background/90"
+                  className="inline-flex h-11 items-center justify-center rounded-lg bg-foreground px-5 text-[15px] font-medium text-background transition-colors hover:bg-foreground/85"
                 >
                   Create a free account
                 </Link>
                 <Link
                   href="/sign-in"
-                  className="inline-flex h-11 items-center justify-center rounded-lg border border-background/25 px-5 text-[15px] font-medium text-background transition-colors hover:bg-background/10"
+                  className="inline-flex h-11 items-center justify-center rounded-lg border border-border bg-background px-5 text-[15px] font-medium transition-colors hover:bg-muted"
                 >
                   Sign in
                 </Link>
