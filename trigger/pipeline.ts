@@ -14,6 +14,7 @@ async function mila(args: string[]) {
 export const daily = schedules.task({
   id: "mila-daily",
   cron: { pattern: "0,30 15-20 * * 1-5", timezone: "Asia/Colombo" },
+  queue: { concurrencyLimit: 1 }, // never two pipeline runs at once
   run: async () => mila(["daily"]),
 });
 

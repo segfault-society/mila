@@ -59,7 +59,7 @@ def mark_source(conn: psycopg.Connection, source: str, *, data_date=None, error:
     else:
         conn.execute(
             """insert into source_health (source, last_success_at, last_data_date) values (%s, now(), %s)
-               on conflict (source) do update set last_success_at = now(),
+               on conflict (source) do update set last_success_at = now(), last_error = null, last_error_at = null,
                  last_data_date = greatest(source_health.last_data_date, excluded.last_data_date)""",
             (source, data_date))
     conn.commit()
