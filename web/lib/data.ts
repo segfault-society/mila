@@ -379,7 +379,8 @@ export async function getScorecard(): Promise<Scorecard> {
     const v = Number(r.value);
     if (!scoredAt || String(r.created_at) > scoredAt) scoredAt = String(r.created_at);
     if (key === "_all") overall[String(r.metric)] = v;
-    else {
+    // other "_" keys are pipeline bookkeeping (e.g. "_model": the spike threshold it chose), not items
+    else if (!key.startsWith("_")) {
       if (!byItem.has(key)) byItem.set(key, {});
       byItem.get(key)![String(r.metric)] = v;
     }
