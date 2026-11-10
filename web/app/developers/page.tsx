@@ -203,13 +203,13 @@ export default async function DevelopersPage() {
           <dl className="grid gap-3 pt-2 sm:grid-cols-4">
             {[
               { v: int.format(stats.prices), l: "validated daily prices" },
-              { v: String(ex.nItems), l: "items: vegetables, rice, staples" },
+              { v: String(ex.nItems), l: "items: vegetables, fruit, rice and staples" },
               { v: String(stats.markets), l: "markets, wholesale and retail" },
               { v: dayYear(stats.lastDate), l: `latest report (from ${dayYear(stats.firstDate)})` },
             ].map((s) => (
-              <div key={s.l} className="rounded-xl bg-card p-4 ring-1 ring-foreground/10">
-                <dd className="tabular text-xl font-semibold tracking-tight">{s.v}</dd>
+              <div key={s.l} className="flex flex-col-reverse rounded-xl bg-card p-4 ring-1 ring-foreground/10">
                 <dt className="mt-1 text-xs leading-relaxed text-muted-foreground">{s.l}</dt>
+                <dd className="tabular text-xl font-semibold tracking-tight">{s.v}</dd>
               </div>
             ))}
           </dl>
