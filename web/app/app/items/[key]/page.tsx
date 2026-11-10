@@ -2,8 +2,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
-import { SiteHeader } from "@/components/site-header";
-import { SiteFooter } from "@/components/site-footer";
 import { MarketPicker } from "@/components/market-picker";
 import { Freshness } from "@/components/freshness";
 import { DemoBanner, Notice } from "@/components/notice";
@@ -22,9 +20,10 @@ import {
 } from "@/lib/data";
 import { day, dayLong, pct, perUnit, rs, rsRange, sentenceCase, signedPct, todayColombo } from "@/lib/format";
 import { MARKET_VIEWS, marketName, resolveView, viewQuery } from "@/lib/markets";
+import { SPIKE_WARN_AT } from "@/lib/signals";
 import { cn } from "@/lib/utils";
 
-export const revalidate = 300;
+export const dynamic = "force-dynamic";
 
 const REGION: Record<string, string> = {
   upcountry: "Grown mostly in the up-country hills (Nuwara Eliya, Badulla)",
@@ -32,19 +31,18 @@ const REGION: Record<string, string> = {
   north: "Grown mostly in the north (Jaffna)",
 };
 
-export async function generateMetadata(props: PageProps<"/item/[key]">): Promise<Metadata> {
+export async function generateMetadata(props: PageProps<"/app/items/[key]">): Promise<Metadata> {
   const { key } = await props.params;
   const item = await getItem(key);
   return { title: item ? `${item.name} price outlook` : "Item not found" };
 }
 
-function mae(v: number): string {
-  // mae_pct may arrive as a fraction (0.083) or a percentage (8.3)
-  const p = v <= 1 ? v * 100 : v;
+/** mae_pct is stored in percent (20.8 means 20.8%). */
+function mae(p: number): string {
   return `±${p.toFixed(p < 10 ? 1 : 0)}%`;
 }
 
-export default async function ItemPage(props: PageProps<"/item/[key]">) {
+export default async function ItemPage(props: PageProps<"/app/items/[key]">) {
   const [{ key }, sp] = await Promise.all([props.params, props.searchParams]);
   const item = await getItem(key);
   if (!item) notFound();
@@ -86,10 +84,9 @@ export default async function ItemPage(props: PageProps<"/item/[key]">) {
 
   return (
     <>
-      <SiteHeader homeHref={`/${q}`} />
-      <main className="mx-auto w-full max-w-5xl flex-1 px-4 pt-5 pb-10">
+      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:px-6 lg:py-8">
         <Link
-          href={`/${q}`}
+          href={`/app/prices${q}`}
           className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="size-4" aria-hidden /> All prices
@@ -98,20 +95,20 @@ export default async function ItemPage(props: PageProps<"/item/[key]">) {
         <section className="mt-3 space-y-4">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{item.name}</h1>
+              <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">{item.name}</h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                {item.category === "rice" ? "Rice" : item.category === "vegetable" ? "Vegetable" : sentenceCase(item.category)}{" "}
-                · priced {perUnit(item.unit) === "each" ? "each" : `per ${item.unit}`}
-                {item.region && REGION[item.region] ? ` · ${REGION[item.region]}` : ""}
-                {item.basket ? " · in the eatery basket" : ""}
+                {item.category === "rice" ? "Rice" : item.category === "vegetable" ? "Vegetable" : sentenceCase(item.category)},
+                priced {perUnit(item.unit) === "each" ? "each" : `per ${item.unit}`}.
+                {item.region && REGION[item.region] ? ` ${REGION[item.region]}.` : ""}
+                {item.basket ? " Part of the eatery basket." : ""}
               </p>
             </div>
             {run ? (
-              <SignalBadge signal={forecast?.signal ?? "no_forecast"} size="lg" />
+              <SignalBadge signal={forecast?.signal ?? "no_forecast"} prob={forecast?.spikeProb} size="lg" />
             ) : null}
           </div>
           <Freshness health={health} run={run} />
-          {available.size > 0 && <MarketPicker current={view} basePath={`/item/${key}`} available={available} />}
+          {available.size > 0 && <MarketPicker current={view} basePath={`/app/items/${key}`} available={available} />}
           {run?.demo && <DemoBanner />}
         </section>
 
@@ -137,7 +134,7 @@ export default async function ItemPage(props: PageProps<"/item/[key]">) {
                   {forecast.spikeProb != null && (
                     <>
                       . Chance of a 25%+ spike:{" "}
-                      <span className={cn("tabular font-semibold", forecast.spikeProb >= 0.5 && "text-spike")}>
+                      <span className={cn("tabular font-semibold", forecast.spikeProb >= SPIKE_WARN_AT && "text-spike")}>
                         {pct(forecast.spikeProb)}
                       </span>
                     </>
@@ -147,7 +144,7 @@ export default async function ItemPage(props: PageProps<"/item/[key]">) {
               ) : (
                 <p className="text-sm text-muted-foreground">
                   {!run
-                    ? "Forecasts not yet available — latest prices shown."
+                    ? "Forecasts not yet available. Latest prices shown."
                     : forecast?.abstainReason
                       ? `No forecast: ${forecast.abstainReason}.`
                       : "Mila does not forecast this item in this market yet."}
@@ -211,7 +208,7 @@ export default async function ItemPage(props: PageProps<"/item/[key]">) {
                 <CardTitle>Mila&apos;s record on {item.name.toLowerCase()}</CardTitle>
                 {backtest && (
                   <CardDescription>
-                    Back-test {backtest.demo ? "(fake demo numbers)" : `“${backtest.runLabel}”`} on past prices
+                    {backtest.demo ? "Fake demo numbers" : "Hold-out test on past prices, Jan 2024 to Nov 2026"}
                   </CardDescription>
                 )}
               </CardHeader>
@@ -276,7 +273,7 @@ export default async function ItemPage(props: PageProps<"/item/[key]">) {
                       <TableRow key={`${r.market}|${r.priceType}`} className={cn(active && "bg-muted/60")}>
                         <TableCell>
                           <Link
-                            href={`/item/${key}${viewQuery({ market: r.market, type: r.priceType })}`}
+                            href={`/app/items/${key}${viewQuery({ market: r.market, type: r.priceType })}`}
                             className="underline-offset-2 hover:underline"
                           >
                             {marketName(r.market)} <span className="text-muted-foreground">{r.priceType}</span>
@@ -289,7 +286,7 @@ export default async function ItemPage(props: PageProps<"/item/[key]">) {
                         </TableCell>
                         {run && (
                           <TableCell className="text-right">
-                            <SignalBadge signal={r.forecast?.signal ?? "no_forecast"} size="sm" />
+                            <SignalBadge signal={r.forecast?.signal ?? "no_forecast"} prob={r.forecast?.spikeProb} size="sm" />
                           </TableCell>
                         )}
                       </TableRow>
@@ -303,12 +300,11 @@ export default async function ItemPage(props: PageProps<"/item/[key]">) {
 
         {!run && (
           <Notice className="mt-4">
-            Forecasts not yet available — latest prices shown. Mila publishes a new 7-day outlook each
-            morning after the Central Bank report.
+            Forecasts not yet available. Latest prices shown. Mila publishes a new 7-day outlook each trading
+            day after the Central Bank report.
           </Notice>
         )}
       </main>
-      <SiteFooter />
     </>
   );
 }

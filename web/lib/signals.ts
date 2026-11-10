@@ -8,8 +8,8 @@ export const SIGNAL_META: Record<
 > = {
   spike: {
     glyph: "▲",
-    label: "Spike likely",
-    plural: "Spike likely",
+    label: "Spike risk",
+    plural: "Spike risk",
     tone: "bg-spike-soft text-spike",
     dot: "bg-spike",
     ring: "ring-spike/40",
@@ -53,5 +53,7 @@ export function signalRank(s: Signal): number {
 }
 
 /** Spike = a rise of 25% or more within 7 days (the model's definition). */
+/** Mila warns when the spike chance is at least 15%: the threshold with the best F1 on validation. */
+export const SPIKE_WARN_AT = 0.15;
 export const SPIKE_THRESHOLD = 0.25;
 export const HORIZON_DAYS = 7;

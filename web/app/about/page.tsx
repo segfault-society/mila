@@ -11,7 +11,10 @@ export const metadata: Metadata = {
 };
 
 const SIGNALS: { signal: Signal; text: string }[] = [
-  { signal: "spike", text: "Mila thinks there is a real chance the price jumps 25% or more within 7 days." },
+  {
+    signal: "spike",
+    text: "There is at least a 15% chance the price jumps 25% or more within 7 days. The badge shows the chance.",
+  },
   { signal: "rise", text: "The middle guess is at least 5% above today's price, but a spike is not likely." },
   { signal: "steady", text: "The middle guess is within 5% of today's price." },
   { signal: "fall", text: "The middle guess is at least 5% below today's price." },
@@ -31,9 +34,9 @@ export default function About() {
   return (
     <>
       <SiteHeader />
-      <main className="mx-auto w-full max-w-2xl flex-1 space-y-10 px-4 pt-8 pb-12">
+      <main className="mx-auto w-full max-w-2xl flex-1 space-y-10 px-4 pt-12 pb-20">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">How Mila works</h1>
+          <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">How Mila works</h1>
           <p className="mt-2 text-[15px] leading-relaxed text-muted-foreground">
             <em>Mila</em> (මිල) means &ldquo;price&rdquo; in Sinhala. Mila helps small rice-and-curry eateries
             see vegetable and rice price spikes a week before they hit, so the owner can buy early, switch a
@@ -61,18 +64,20 @@ export default function About() {
 
         <Section title="What the forecast says">
           <p>
-            Each morning, after the CBSL report, Mila looks 7 days ahead for each item and market. It gives a
+            Each trading day, after the CBSL report comes out, Mila looks 7 days ahead for each item and market. It gives a
             <strong> middle guess</strong> and an <strong>80% range</strong>: in 8 weeks out of 10, the real price
             should land inside that range. On each item page the range is drawn as a widening fan.
           </p>
           <p>
             A <strong>spike</strong> means a rise of <strong>25% or more within 7 days</strong>. The &ldquo;spike
-            chance&rdquo; is how likely Mila thinks that is.
+            chance&rdquo; is how likely Mila thinks that is. Mila shows <strong>Spike risk</strong> from a 15% chance:
+            in testing, that setting caught the most spikes for the fewest false alarms, so expect some warnings that
+            don&apos;t come true.
           </p>
           <ul className="space-y-2.5">
             {SIGNALS.map((s) => (
               <li key={s.signal} className="flex items-start gap-3">
-                <SignalBadge signal={s.signal} size="sm" className="mt-0.5 w-[118px] justify-center" />
+                <SignalBadge signal={s.signal} size="sm" className="mt-0.5 w-[112px] justify-center" />
                 <span>{s.text}</span>
               </li>
             ))}
@@ -93,7 +98,11 @@ export default function About() {
             Mila is a statistical model trained on years of past CBSL prices and rainfall. It learns how prices
             moved after similar weeks before — after heavy rain, at the same time of year, after a run-up at
             Pettah — and its ranges are calibrated on recent months so the 80% range really holds about 80% of
-            the time. Each item page shows Mila&apos;s back-tested record for that item.
+            the time. Each item page shows Mila&apos;s back-tested record for that item, and the{" "}
+            <Link href="/app/track-record" className="underline underline-offset-2">
+              track record
+            </Link>{" "}
+            lists every item.
           </p>
           <p>
             <strong>Every number on this site comes from the data and the model, never from an AI chatbot or
@@ -108,8 +117,8 @@ export default function About() {
             markets. Data: Central Bank of Sri Lanka Daily Price Report; weather: Open-Meteo (CC BY 4.0).
           </p>
           <p>
-            <Link href="/" className="font-medium underline underline-offset-2">
-              See this week&apos;s prices →
+            <Link href="/#live" className="font-medium underline underline-offset-2">
+              See this week&apos;s prices
             </Link>
           </p>
         </Section>

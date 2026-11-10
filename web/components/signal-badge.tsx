@@ -1,18 +1,23 @@
 import { cn } from "@/lib/utils";
 import { SIGNAL_META, type Signal } from "@/lib/signals";
+import { pct } from "@/lib/format";
 
 export function SignalBadge({
   signal,
   size = "md",
   className,
   label,
+  prob,
 }: {
   signal: Signal;
   size?: "sm" | "md" | "lg";
   className?: string;
   label?: string;
+  /** spike chance (0–1); shown next to "Spike risk" */
+  prob?: number | null;
 }) {
   const m = SIGNAL_META[signal];
+  const text = label ?? (signal === "spike" && prob != null ? `${m.label} ${pct(prob)}` : m.label);
   return (
     <span
       className={cn(
@@ -27,7 +32,7 @@ export function SignalBadge({
       <span aria-hidden className="text-[0.8em] leading-none">
         {m.glyph}
       </span>
-      {label ?? m.label}
+      {text}
     </span>
   );
 }

@@ -15,9 +15,9 @@ export default function NotFound() {
           </p>
           <Link
             href="/"
-            className="mt-6 inline-flex h-10 items-center rounded-full bg-foreground px-5 text-sm font-medium text-background"
+            className="mt-6 inline-flex h-10 items-center rounded-lg bg-foreground px-5 text-sm font-medium text-background"
           >
-            See this week&apos;s prices
+            Go to the home page
           </Link>
         </div>
       </main>

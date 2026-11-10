@@ -10,16 +10,16 @@ export type MarketView = {
 
 /** The market / price-type series CBSL reports today. Narahenpita wholesale only appears in 2020. */
 export const MARKET_VIEWS: MarketView[] = [
-  { market: "pettah", type: "wholesale", label: "Pettah wholesale", short: "Pettah · wholesale" },
-  { market: "pettah", type: "retail", label: "Pettah retail", short: "Pettah · retail" },
-  { market: "dambulla", type: "wholesale", label: "Dambulla wholesale", short: "Dambulla · wholesale" },
-  { market: "dambulla", type: "retail", label: "Dambulla retail", short: "Dambulla · retail" },
-  { market: "narahenpita", type: "retail", label: "Narahenpita retail", short: "Narahenpita · retail" },
+  { market: "pettah", type: "wholesale", label: "Pettah wholesale", short: "Pettah wholesale" },
+  { market: "pettah", type: "retail", label: "Pettah retail", short: "Pettah retail" },
+  { market: "dambulla", type: "wholesale", label: "Dambulla wholesale", short: "Dambulla wholesale" },
+  { market: "dambulla", type: "retail", label: "Dambulla retail", short: "Dambulla retail" },
+  { market: "narahenpita", type: "retail", label: "Narahenpita retail", short: "Narahenpita retail" },
   {
     market: "marandagahamula",
     type: "wholesale",
     label: "Marandagahamula wholesale",
-    short: "Marandagahamula · rice",
+    short: "Marandagahamula rice",
     note: "rice only",
   },
 ];

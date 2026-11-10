@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { day, daysBetween, num, pct, perUnit, rs, rsRange, sentenceCase, signedPct } from "@/lib/format";
-import { SIGNAL_META } from "@/lib/signals";
+import { SIGNAL_META, SPIKE_WARN_AT } from "@/lib/signals";
 import type { BoardRow } from "@/lib/types";
 import { PendingBadge, SignalBadge } from "@/components/signal-badge";
 import { Sparkline } from "@/components/sparkline";
@@ -57,7 +57,7 @@ export function ItemCard({
             <span className={cn(stale && "text-rise font-medium")}>{day(row.latestDate)}</span>
             {change != null && (
               <>
-                {" · "}
+                {", "}
                 <span
                   className={cn(
                     "tabular",
@@ -73,7 +73,7 @@ export function ItemCard({
           </p>
         </div>
         <div className="flex flex-col items-end gap-2">
-          {hasRun ? <SignalBadge signal={signal} /> : <PendingBadge />}
+          {hasRun ? <SignalBadge signal={signal} prob={f?.spikeProb} /> : <PendingBadge />}
           <Sparkline
             points={row.spark}
             stroke={hasRun ? SPARK_STROKE[signal] : "var(--muted-foreground)"}
@@ -105,7 +105,7 @@ export function ItemCard({
                   <p
                     className={cn(
                       "tabular font-semibold",
-                      f.spikeProb >= 0.5 ? "text-spike" : f.spikeProb >= 0.2 ? "text-rise" : "",
+                      f.spikeProb >= SPIKE_WARN_AT ? "text-spike" : f.spikeProb >= 0.08 ? "text-rise" : "",
                     )}
                   >
                     {pct(f.spikeProb)}
@@ -130,7 +130,11 @@ export function ItemCard({
       {extra}
 
       <span className="sr-only">
-        {hasRun ? SIGNAL_META[signal].label : "Forecast pending"}. Open {row.name} details.
+        {hasRun
+          ? signal === "spike" && f?.spikeProb != null
+            ? `${SIGNAL_META[signal].label}, ${pct(f.spikeProb)} chance`
+            : SIGNAL_META[signal].label
+          : "Forecast pending"}. Open {row.name} details.
       </span>
     </Link>
   );

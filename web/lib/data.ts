@@ -341,3 +341,98 @@ export async function getSubscriber(token: string): Promise<Subscriber | null> {
   if (token === DEMO_TOKEN && demoEnabled()) return DEMO_SUBSCRIBER;
   return null;
 }
+
+/** The signed-in owner's kitchen (one per account), or null. */
+export async function getKitchenForUser(userId: string): Promise<(Subscriber & { token: string }) | null> {
+  const rows = await db()`
+    select token from subscribers where user_id = ${userId} and active limit 1`;
+  const token = rows[0]?.token;
+  if (!token) return null;
+  const sub = await getSubscriber(String(token));
+  return sub ? { ...sub, token: String(token) } : null;
+}
+
+const qScores = cached(
+  "scores",
+  async () =>
+    (await db()`
+      select item_key, metric, value, to_json(created_at) #>> '{}' as created_at
+      from backtest_scores where run_label = 'latest'`) as Row[],
+);
+
+export type Scorecard = {
+  overall: Record<string, number>;
+  items: { key: string; metrics: Record<string, number> }[];
+  nForecasts: number;
+  scoredAt: string | null;
+};
+
+/** The hold-out back-test ("latest"): overall metrics (item '_all') and one row per item. */
+export async function getScorecard(): Promise<Scorecard> {
+  const rows = await qScores();
+  const overall: Record<string, number> = {};
+  const byItem = new Map<string, Record<string, number>>();
+  let scoredAt: string | null = null;
+  for (const r of rows) {
+    if (r.value == null) continue;
+    const key = String(r.item_key);
+    const v = Number(r.value);
+    if (!scoredAt || String(r.created_at) > scoredAt) scoredAt = String(r.created_at);
+    if (key === "_all") overall[String(r.metric)] = v;
+    else {
+      if (!byItem.has(key)) byItem.set(key, {});
+      byItem.get(key)![String(r.metric)] = v;
+    }
+  }
+  const items = [...byItem].map(([key, metrics]) => ({ key, metrics }));
+  const nForecasts = items.reduce((a, i) => a + (i.metrics.n_forecasts ?? 0), 0);
+  return { overall, items, nForecasts, scoredAt };
+}
+
+export type LiveScores = {
+  n: number;
+  inside80: number | null;
+  meanAbsPctError: number | null;
+  spikes: number;
+  spikesCaught: number;
+  warned: number;
+  warnedRight: number;
+  firstBase: string | null;
+  lastTarget: string | null;
+};
+
+const qLive = cached("live-scores", async () => {
+  const rows = await db()`
+    select count(*)::int as n,
+           avg(case when inside_80 then 1.0 else 0.0 end)::float8 as inside80,
+           avg(abs_pct_error)::float8 as mape,
+           count(*) filter (where spiked)::int as spikes,
+           count(*) filter (where spiked and warned)::int as caught,
+           count(*) filter (where warned)::int as warned,
+           count(*) filter (where warned and spiked)::int as warned_right,
+           min(base_date)::text as first_base,
+           max(target_date)::text as last_target
+    from live_scores`;
+  return rows[0] as Row;
+});
+
+/** Forecasts made since the pilot went live, scored against the real price on their target date. Null if unavailable. */
+export async function getLiveScores(): Promise<LiveScores | null> {
+  try {
+    const r = await qLive();
+    return {
+      n: Number(r.n ?? 0),
+      inside80: n(r.inside80),
+      meanAbsPctError: n(r.mape),
+      spikes: Number(r.spikes ?? 0),
+      spikesCaught: Number(r.caught ?? 0),
+      warned: Number(r.warned ?? 0),
+      warnedRight: Number(r.warned_right ?? 0),
+      firstBase: s(r.first_base),
+      lastTarget: s(r.last_target),
+    };
+  } catch {
+    // the view arrives with migration 0003; before that there is nothing to show
+    return null;
+  }
+}
