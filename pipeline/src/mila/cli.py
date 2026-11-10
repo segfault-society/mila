@@ -162,11 +162,24 @@ def daily(skip_crawl: bool = False) -> None:
                 "select max(obs_date) from weather_daily where source = 'archive'").fetchone()[0])
         except Exception as exc:  # stale weather is flagged, not fatal: the model has a no-weather fallback
             mark_source(conn, "open_meteo", error=str(exc))
+        from mila.scoring import score_forecasts
+
+        typer.echo(f"scored {score_forecasts(conn)} forecasts against real prices")
         last_run = conn.execute("select max(data_date) from forecast_runs").fetchone()[0]
         if counts.get("parsed") or last_run is None or last_run < latest:
             typer.echo(f"forecast run {run_forecast(conn)}")
         else:
             typer.echo("no new prices; forecast unchanged")
+
+
+@app.command()
+def score() -> None:
+    """Score live forecasts whose 7-day target date now has a CBSL report."""
+    from mila.db import connect
+    from mila.scoring import live_summary, score_forecasts
+
+    with connect() as conn:
+        typer.echo(f"scored {score_forecasts(conn)} forecasts; live record: {live_summary(conn)}")
 
 
 @app.command()
