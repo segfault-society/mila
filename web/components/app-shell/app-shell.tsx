@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
   ChefHat,
+  Bell,
   ChevronsUpDown,
   CircleUser,
   Home,
@@ -41,6 +42,7 @@ const NAV: { href: string; label: string; icon: LucideIcon; match: (p: string) =
     match: (p) => p.startsWith("/app/prices") || p.startsWith("/app/items"),
   },
   { href: "/app/kitchen", label: "My kitchen", icon: ChefHat, match: (p) => p.startsWith("/app/kitchen") },
+  { href: "/app/alerts", label: "Alerts", icon: Bell, match: (p) => p.startsWith("/app/alerts") },
   { href: "/app/track-record", label: "Track record", icon: Target, match: (p) => p.startsWith("/app/track-record") },
   { href: "/app/account", label: "Account", icon: CircleUser, match: (p) => p.startsWith("/app/account") },
 ];
