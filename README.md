@@ -130,8 +130,8 @@ uv run mila digest                  # print each subscriber's SMS (add --send to
 uv run mila daily                   # what the scheduler runs
 uv run pytest
 
-# Dashboard
-cd web && pnpm install && pnpm dev  # needs DATABASE_URL in web/.env.local
+# Dashboard (deploys to Vercel on every push to main; project root directory = web/)
+cd web && pnpm install && pnpm dev  # needs DATABASE_URL, NEON_AUTH_BASE_URL, NEON_AUTH_COOKIE_SECRET in web/.env.local
 
 # Scheduler (from the repo root)
 pnpm install && npx trigger.dev deploy --env prod
