@@ -102,7 +102,12 @@ export default async function OverviewPage() {
                     {!plan
                       ? "Swaps and buy-ahead advice appear here once next week's forecast is published."
                       : plan.saving.perDay >= 1
-                        ? `Options that could save about ${rs(plan.saving.perDay)} a day next week, from swaps and buying ahead.`
+                        ? `Options that could save about ${rs(Math.round(plan.saving.perDay))} a day next week, from ${[
+                            plan.saving.swapsPerDay >= 1 && "swaps",
+                            plan.saving.buyAheadWeek >= 1 && "buying storables ahead",
+                          ]
+                            .filter(Boolean)
+                            .join(" and ")}.`
                         : "No savings to act on this week. See swaps, buy-ahead advice and your cost per packet."}
                   </span>
                 </span>

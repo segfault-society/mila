@@ -8,7 +8,7 @@ import { SignalBadge } from "@/components/signal-badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireUser } from "@/lib/auth/session";
 import { getBoard, getHealth, getKitchenForUser } from "@/lib/data";
-import { day, dayLong, perUnit, pct, qty, rs, rsRange, signedPct } from "@/lib/format";
+import { day, dayLong, perUnit, pct, qty, rs, signedPct } from "@/lib/format";
 import { viewLabel, viewQuery } from "@/lib/markets";
 import { buildPlan, getPacketsPerDay, perPacket, type BuyAhead, type Outlook, type Plan, type Swap } from "@/lib/planner";
 import { cn } from "@/lib/utils";
@@ -18,6 +18,14 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Menu planner" };
 
 const lower = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
+
+/** Per-packet amounts are small, so always show cents: "Rs 90.93", "Rs 83.83–107.38". */
+const cents = new Intl.NumberFormat("en-LK", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const rsc = (v: number) => `Rs ${cents.format(v)}`;
+/** Daily amounts in whole rupees: "Rs 1,278", "Rs 19". */
+const whole = new Intl.NumberFormat("en-LK", { maximumFractionDigits: 0 });
+const rsw = (v: number) => `Rs ${whole.format(Math.round(v))}`;
+const rscRange = (lo: number, hi: number) => `Rs ${cents.format(Math.min(lo, hi))}–${cents.format(Math.max(lo, hi))}`;
 
 /** "Rs 1,250 now, about Rs 1,310 by 17 Nov (+5%)" for one item, per unit. */
 function priceLine(o: Outlook, target: string | null) {
@@ -127,9 +135,17 @@ export default async function PlannerPage() {
 
 function Headline({ plan }: { plan: Plan }) {
   const { swapsPerDay, buyAheadWeek, perDay } = plan.saving;
+  const swapCount = plan.swaps.filter((s) => (s.options[0]?.saving ?? 0) >= 1).length;
+  const buyCount = plan.buyAhead.filter((b) => b.kind === "buy_now").length;
   const parts: string[] = [];
-  if (swapsPerDay >= 1) parts.push(`${rs(swapsPerDay)} a day from swaps`);
-  if (buyAheadWeek >= 1) parts.push(`${rs(buyAheadWeek)} by buying a week's storables now`);
+  if (swapsPerDay >= 1) {
+    parts.push(`Swapping ${swapCount} item${swapCount === 1 ? "" : "s"} about to rise: up to ${rsw(swapsPerDay)} a day`);
+  }
+  if (buyAheadWeek >= 1) {
+    parts.push(
+      `buying a week of ${buyCount} storable${buyCount === 1 ? "" : "s"} now: about ${rsw(buyAheadWeek)} in all (${rsw(buyAheadWeek / 7)} a day)`,
+    );
+  }
   const anyRising = plan.swaps.length > 0;
 
   return (
@@ -142,10 +158,10 @@ function Headline({ plan }: { plan: Plan }) {
           {perDay >= 1 ? (
             <>
               <p className="text-sm text-muted-foreground">You could save next week</p>
-              <p className="tabular mt-0.5 text-3xl font-semibold tracking-tight">about {rs(perDay)} a day</p>
+              <p className="tabular mt-0.5 text-3xl font-semibold tracking-tight">about {rsw(perDay)} a day</p>
               {parts.length > 0 && (
                 <p className="tabular mt-1 text-sm text-muted-foreground">
-                  Up to {parts.join(", plus ")}, if you take the options below.
+                  {parts.join("; ").replace(/^b/, "B")}.
                 </p>
               )}
             </>
@@ -235,9 +251,9 @@ function SwapsCard({
                             )}
                           >
                             {o.saving >= 0.5
-                              ? `${rs(o.saving)} less a day`
+                              ? `${rsw(o.saving)} less a day`
                               : o.saving <= -0.5
-                                ? `${rs(-o.saving)} more a day`
+                                ? `${rsw(-o.saving)} more a day`
                                 : "About the same a day"}
                           </p>
                         </div>
@@ -247,7 +263,7 @@ function SwapsCard({
                               {qty(s.qty, s.from.row.unit)} of {lower(s.from.row.name)}
                             </dt>
                             <dd>
-                              about {rs(o.fromCost)} a day{" "}
+                              about {rsw(o.fromCost)} a day{" "}
                               <span className="text-muted-foreground">({signedPct(s.from.change)} expected)</span>
                             </dd>
                           </div>
@@ -256,7 +272,7 @@ function SwapsCard({
                               {qty(s.qty, o.sub.row.unit)} of {lower(o.sub.row.name)}
                             </dt>
                             <dd>
-                              about {rs(o.subCost)} a day{" "}
+                              about {rsw(o.subCost)} a day{" "}
                               <span className="text-muted-foreground">({signedPct(o.sub.change)} expected)</span>
                             </dd>
                           </div>
@@ -289,7 +305,7 @@ function BuyAheadRow({ b, target, itemHref }: { b: BuyAhead; target: string | nu
         {b.kind === "buy_now" ? (
           <>
             Buying a week&apos;s stock now instead of next week saves about{" "}
-            <span className="tabular font-semibold text-steady">{rs(b.saving)}</span>.
+            <span className="tabular font-semibold text-steady">{rsw(b.saving)}</span>.
           </>
         ) : b.kind === "ease" ? (
           "Prices are expected to ease; buy as needed."
@@ -362,15 +378,15 @@ function PacketCard({ plan, packets }: { plan: Plan; packets: number | null }) {
             <dl className="grid grid-cols-2 gap-2">
               <div className="rounded-xl bg-muted/60 p-3">
                 <dt className="text-xs text-muted-foreground">Today</dt>
-                <dd className="tabular mt-0.5 text-xl font-semibold tracking-tight">{rs(pp.today)}</dd>
+                <dd className="tabular mt-0.5 text-xl font-semibold tracking-tight">{rsc(pp.today)}</dd>
                 <dd className="text-xs text-muted-foreground">a packet</dd>
               </div>
               <div className={cn("rounded-xl p-3", changeTone(priced.change, true))}>
-                <dt className="text-xs text-muted-foreground">Next week</dt>
+                <dt className="text-xs text-muted-foreground">Next week, about</dt>
                 {forecasted ? (
                   <>
-                    <dd className="tabular mt-0.5 text-xl font-semibold tracking-tight">about {rs(pp.mid)}</dd>
-                    <dd className="tabular text-xs text-muted-foreground">likely {rsRange(pp.lo, pp.hi)}</dd>
+                    <dd className="tabular mt-0.5 text-xl font-semibold tracking-tight">{rsc(pp.mid)}</dd>
+                    <dd className="tabular text-xs text-muted-foreground">likely {rscRange(pp.lo, pp.hi)}</dd>
                   </>
                 ) : (
                   <dd className="mt-1 text-xs text-muted-foreground">No forecast for your items yet</dd>
@@ -384,7 +400,7 @@ function PacketCard({ plan, packets }: { plan: Plan; packets: number | null }) {
                 ) : (
                   <>
                     <span className={cn("font-semibold", pp.change > 0 ? "text-spike" : "text-fall")}>
-                      {rs(Math.abs(pp.change))} {pp.change > 0 ? "more" : "less"}
+                      {rsc(Math.abs(pp.change))} {pp.change > 0 ? "more" : "less"}
                     </span>{" "}
                     a packet next week ({signedPct(priced.change)}).
                   </>
@@ -392,7 +408,7 @@ function PacketCard({ plan, packets }: { plan: Plan; packets: number | null }) {
               </p>
             )}
             <p className="tabular text-xs text-muted-foreground">
-              {rs(priced.total.today)} a day today over {packets.toLocaleString("en-LK")} packets. Counts only your
+              {rsw(priced.total.today)} a day today over {packets.toLocaleString("en-LK")} packets. Counts only your
               basket items, not fish, meat, gas or wages.
               {priced.flatCount > 0 &&
                 ` ${priced.flatCount} item${priced.flatCount === 1 ? "" : "s"} without a forecast ${priced.flatCount === 1 ? "is" : "are"} counted at today's price.`}
