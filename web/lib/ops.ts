@@ -8,14 +8,24 @@ import type { Signal } from "@/lib/signals";
 type Row = Record<string, unknown>;
 const str = (v: unknown): string | null => (v == null ? null : String(v));
 
-/** ADMIN_EMAILS is a comma-separated list; matching ignores case and spaces. */
-export function isAdmin(email: string | null | undefined): boolean {
-  if (!email) return false;
-  const allowed = (process.env.ADMIN_EMAILS ?? "")
+type AdminCandidate = { id?: string | null; email?: string | null; emailVerified?: boolean | null } | null | undefined;
+
+function list(name: string): string[] {
+  return (process.env[name] ?? "")
     .split(",")
     .map((e) => e.trim().toLowerCase())
     .filter(Boolean);
-  return allowed.includes(email.trim().toLowerCase());
+}
+
+/**
+ * Admin = the Neon Auth user ID is in ADMIN_USER_IDS, or the email is in ADMIN_EMAILS AND verified.
+ * Email alone is not enough: email/password sign-up does not verify addresses, so anyone could register an
+ * allow-listed address that is not taken yet. Google sign-ins arrive verified.
+ */
+export function isAdmin(user: AdminCandidate): boolean {
+  if (!user) return false;
+  if (user.id && list("ADMIN_USER_IDS").includes(user.id.toLowerCase())) return true;
+  return Boolean(user.email && user.emailVerified === true && list("ADMIN_EMAILS").includes(user.email.trim().toLowerCase()));
 }
 
 export type SourceRow = {

@@ -24,7 +24,7 @@ export const dynamic = "force-dynamic";
 /** Non-admins get the generic 404, so the tab title should not name the console either. */
 export async function generateMetadata(): Promise<Metadata> {
   const user = await getSessionUser();
-  return isAdmin(user?.email) ? { title: "Ops console" } : {};
+  return isAdmin(user) ? { title: "Ops console" } : {};
 }
 
 const int = new Intl.NumberFormat("en");
@@ -204,7 +204,7 @@ async function load() {
 
 export default async function AdminPage() {
   const user = await requireUser();
-  if (!isAdmin(user.email)) notFound();
+  if (!isAdmin(user)) notFound();
 
   const { sources, runs, archive, queue, messages, counts, now } = await load();
   const queueSize = archive.byStatus.failed + archive.byStatus.review;
