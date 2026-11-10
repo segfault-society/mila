@@ -16,6 +16,8 @@ export function safeNext(v: string | string[] | undefined | null, fallback = "/a
   }
   if (url.origin !== BASE) return fallback;
   const path = url.pathname + url.search + url.hash;
+  // check the NORMALISED path too: "/.//evil.com" normalises to "//evil.com", a protocol-relative URL
+  if (!path.startsWith("/") || path.startsWith("//") || /[\\\u0000-\u001f\u007f]/.test(path)) return fallback;
   if (path.startsWith("/sign-in") || path.startsWith("/sign-up") || path.startsWith("/api/")) return fallback;
   return path;
 }
